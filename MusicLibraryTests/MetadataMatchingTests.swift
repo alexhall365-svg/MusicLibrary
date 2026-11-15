@@ -38,7 +38,7 @@ final class MetadataMatchingTests: XCTestCase {
                 sha256: "bbb",
                 metadata: ExchangeMetadata(composer: "Howells, Herbert", scoring: "SATB + organ"),
                 confidence: ["composer": 0.4, "scoring": 0.9]),
-            ExchangeEntry(sha256: "zzz", file: "Missing.pdf", metadata: ExchangeMetadata(title: "?")),
+            ExchangeEntry(file: "Missing.pdf", sha256: "zzz", metadata: ExchangeMetadata(title: "?")),
         ])
         let review = MetadataReviewBuilder.build(file: file, subjects: subjects, title: "Test")
 
@@ -49,9 +49,9 @@ final class MetadataMatchingTests: XCTestCase {
         XCTAssertEqual(item.scoreID, b.id)
         XCTAssertEqual(item.after.title, "Psalm 23")
         XCTAssertEqual(item.after.composer, "Howells, Herbert")
-        XCTAssertEqual(item.changes.map(\.field), [.composer, .scoring])
+        XCTAssertEqual(item.changes.map { $0.field }, [MetadataField.composer, MetadataField.scoring])
         XCTAssertTrue(item.needsAttention)
-        XCTAssertEqual(item.changes.filter(\.isUncertain).map(\.field), [.composer])
+        XCTAssertEqual(item.changes.filter { $0.isUncertain }.map { $0.field }, [MetadataField.composer])
     }
 
     func testFlagsAloneNeedAttention() {
