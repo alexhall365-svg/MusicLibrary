@@ -14,17 +14,23 @@ struct ClaudeLabellingView: View {
     @State private var progressText: String?
     @State private var showingFileImporter = false
     @State private var copied = false
+    @State private var aiStatus: AppleIntelligenceStatus = .unavailable("Checking…")
+    @AppStorage(AppleIntelligence.autoLabelOnImportKey) private var autoLabelOnImport = true
 
     private var targetScores: [Score] {
-        onlyMissing ? scores.filter(\.needsLabels) : scores
+        onlyMissing ? scores.filter(\.needsAttention) : scores
     }
 
     var body: some View {
         Form {
             Section {
-                Text("Label hundreds of scores at once. Export them, let Claude identify each piece from its first pages, then review Claude's suggestions before anything is saved.")
+                Text("Fill in titles, composers and more for many scores at once. Apple Intelligence works on this iPad, privately and offline. Claude is more thorough with tricky scans. Either way, you review the suggestions before they're saved.")
                     .font(.callout)
+                Toggle("Only scores that need details", isOn: $onlyMissing)
+                LabeledContent("Scores", value: "\(targetScores.count)")
             }
+
+            appleIntelligenceSection
 
             exportSection
             askSection
@@ -41,7 +47,8 @@ struct ClaudeLabellingView: View {
                 Text("Exports every score's details in the same format, without page text, so you or Claude can correct or enrich them and import the file back here.")
             }
         }
-        .navigationTitle("Label with Claude")
+        .navigationTitle("Auto-Label")
+        .onAppear { aiStatus = AppleIntelligence.status }
         .fileImporter(
             isPresented: $showingFileImporter,
             allowedContentTypes: [.json, .plainText],
@@ -57,16 +64,47 @@ struct ClaudeLabellingView: View {
         ImportCoordinator(context: modelContext, appState: appState)
     }
 
+    private var appleIntelligenceSection: some View {
+        let labeler = appState.autoLabeler
+        return Section {
+            LabeledContent("Status") {
+                Label(aiStatus.isAvailable ? "Ready" : "Unavailable",
+                      systemImage: aiStatus.isAvailable ? "checkmark.circle.fill" : "xmark.circle")
+                    .foregroundStyle(aiStatus.isAvailable ? .green : .secondary)
+            }
+            if !aiStatus.isAvailable {
+                Text(aiStatus.message)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+            Toggle("Fill in details when importing", isOn: $autoLabelOnImport)
+                .disabled(!aiStatus.isAvailable)
+            Button {
+                labeler.start(targetScores.map(\.id), mode: .review, context: modelContext, appState: appState)
+            } label: {
+                Label("Label \(targetScores.count) Score\(targetScores.count == 1 ? "" : "s") on This iPad", systemImage: "sparkles")
+            }
+            .disabled(!aiStatus.isAvailable || labeler.isRunning || targetScores.isEmpty)
+            if labeler.isRunning {
+                Text("Working… \(labeler.done) of \(labeler.total) done. You can leave this screen; the review opens when it's finished.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+        } header: {
+            Text("Apple Intelligence")
+        } footer: {
+            Text("New imports are filled in automatically; anything uncertain appears under Needs Details. Use the button to relabel scores you imported earlier. It takes a few seconds per score, and you review every change before it's saved.")
+        }
+    }
+
     private var exportSection: some View {
         Section {
-            Toggle("Only scores missing details", isOn: $onlyMissing)
             Picker("Scores per file", selection: $batchSize) {
                 Text("25").tag(25)
                 Text("50").tag(50)
                 Text("100").tag(100)
                 Text("All in one").tag(0)
             }
-            LabeledContent("Scores to export", value: "\(targetScores.count)")
             Button {
                 Task { await export(targetScores, includeText: true, stem: "For Claude") }
             } label: {
@@ -86,7 +124,7 @@ struct ClaudeLabellingView: View {
                 }
             }
         } header: {
-            Text("1. Export")
+            Text("Claude 1: Export")
         } footer: {
             Text("Text from the first two pages of each score is included so Claude can identify it. Scanned pages are read with on-device text recognition, which can take a few seconds per score the first time. Tap a file to send it to the Claude app or save it to Files.")
         }
@@ -102,7 +140,7 @@ struct ClaudeLabellingView: View {
                 copied = true
             }
         } header: {
-            Text("2. Ask Claude")
+            Text("Claude 2: Ask Claude")
         } footer: {
             Text("In the Claude app, start a new chat, attach one exported file, paste this message and send. Use a new chat for each file. The detailed instructions travel inside the file.")
         }
@@ -123,7 +161,7 @@ struct ClaudeLabellingView: View {
                 showingFileImporter = true
             }
         } header: {
-            Text("3. Review and Import")
+            Text("Claude 3: Review and Import")
         } footer: {
             Text("You'll see every change before it's saved. Anything Claude was unsure about is highlighted.")
         }

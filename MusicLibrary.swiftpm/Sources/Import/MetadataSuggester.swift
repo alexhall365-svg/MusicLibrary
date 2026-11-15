@@ -12,14 +12,16 @@ struct MetadataSuggestion: Sendable, Equatable {
     var metadata: ScoreMetadata
     /// Confidence 0...1 per `MetadataField.rawValue`.
     var confidence: [String: Double] = [:]
+    /// Notes about anything that should be checked.
+    var flags: [String] = []
     var source: String
 }
 
 /// One interface for every source of metadata suggestions.
 ///
-/// Today: `FilenameMetadataSuggester` at import, plus JSON from Claude (handled by
-/// the exchange format). Later: Apple's on-device Foundation Models where the
-/// device supports it, and an optional Anthropic API key stored in the Keychain.
+/// Sources: `FilenameMetadataSuggester` (file names), `AppleIntelligenceSuggester`
+/// (on-device model, iOS 26+), and JSON from Claude via the exchange format.
+/// Later: an optional Anthropic API key stored in the Keychain.
 protocol MetadataSuggester: Sendable {
     func suggest(for input: SuggestionInput) async -> MetadataSuggestion?
 }

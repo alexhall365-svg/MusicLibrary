@@ -2,8 +2,12 @@ import Foundation
 import Observation
 
 /// App-wide presentation state shared through the SwiftUI environment.
+@MainActor
 @Observable
 final class AppState {
+    /// Background labelling with Apple Intelligence.
+    let autoLabeler = AutoLabeler()
+
     /// When set, the reader is shown full screen.
     var readerRequest: ReaderRequest?
     /// When set, the metadata review sheet is shown.

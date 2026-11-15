@@ -46,6 +46,10 @@ struct RootView: View {
         } message: { alert in
             Text(alert.message)
         }
+        .overlay(alignment: .bottom) {
+            AutoLabelBanner(labeler: appState.autoLabeler)
+                .padding(.bottom, 12)
+        }
         .overlay {
             if let message = appState.busyMessage {
                 BusyOverlay(message: message)
@@ -91,5 +95,55 @@ struct BusyOverlay: View {
             .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
         .accessibilityElement(children: .combine)
+    }
+}
+
+/// Shows Apple Intelligence progress without blocking the app.
+struct AutoLabelBanner: View {
+    let labeler: AutoLabeler
+
+    var body: some View {
+        Group {
+            if labeler.isRunning && labeler.total > 0 {
+                HStack(spacing: 12) {
+                    Image(systemName: "sparkles")
+                        .foregroundStyle(Color.accentColor)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Apple Intelligence: \(min(labeler.done + 1, labeler.total)) of \(labeler.total)")
+                            .font(.footnote.weight(.semibold))
+                            .monospacedDigit()
+                        ProgressView(value: Double(labeler.done), total: Double(max(labeler.total, 1)))
+                            .frame(width: 180)
+                    }
+                    Button("Stop") { labeler.stop() }
+                        .font(.footnote)
+                        .buttonStyle(.bordered)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(.regularMaterial, in: Capsule())
+                .shadow(color: .black.opacity(0.15), radius: 8, y: 2)
+            } else if let summary = labeler.summary {
+                HStack(spacing: 10) {
+                    Image(systemName: "sparkles")
+                        .foregroundStyle(Color.accentColor)
+                    Text(summary)
+                        .font(.footnote)
+                    Button {
+                        labeler.summary = nil
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                    }
+                    .accessibilityLabel("Dismiss")
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(.regularMaterial, in: Capsule())
+                .shadow(color: .black.opacity(0.15), radius: 8, y: 2)
+                .padding(.horizontal, 16)
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: labeler.isRunning)
     }
 }

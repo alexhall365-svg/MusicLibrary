@@ -25,7 +25,7 @@ struct SidebarView: View {
                 }
                 NavigationLink(value: SidebarItem.needsDetails) {
                     Label("Needs Details", systemImage: "questionmark.square.dashed")
-                        .badge(scores.filter(\.needsLabels).count)
+                        .badge(scores.filter(\.needsAttention).count)
                 }
             }
 
@@ -63,7 +63,7 @@ struct SidebarView: View {
 
             Section("Tools") {
                 NavigationLink(value: SidebarItem.labelling) {
-                    Label("Label with Claude", systemImage: "sparkles")
+                    Label("Auto-Label", systemImage: "sparkles")
                 }
             }
         }

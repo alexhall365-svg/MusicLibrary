@@ -17,13 +17,32 @@ struct ImportCoordinator {
         }
         appState.busyMessage = nil
 
+        let newIDs = report.imported.map(\.id)
+        let useAppleIntelligence = report.metadataFile == nil && !newIDs.isEmpty
+            && AppleIntelligence.autoLabelOnImport && AppleIntelligence.status.isAvailable
+        let isSingleClean = report.imported.count == 1 && report.duplicates.isEmpty && report.failures.isEmpty
+
         if let file = report.metadataFile {
             presentReview(of: file, title: "Package Details", emptyMessage: report.summary)
-        } else if report.imported.count == 1 && report.duplicates.isEmpty && report.failures.isEmpty {
-            // One new score: go straight to its details, like the import review screen.
+        } else if isSingleClean {
+            // One new score: fill it in, then show its details to check.
+            if useAppleIntelligence && !appState.autoLabeler.isRunning {
+                appState.busyMessage = "Reading the score with Apple Intelligence…"
+                appState.autoLabeler.start(newIDs, mode: .apply, context: context, appState: appState)
+                await appState.autoLabeler.wait()
+                appState.autoLabeler.summary = nil
+                appState.busyMessage = nil
+            } else if useAppleIntelligence {
+                appState.autoLabeler.start(newIDs, mode: .apply, context: context, appState: appState)
+            }
             appState.editingScore = report.imported[0]
         } else {
-            appState.alert = AppAlert(title: "Import Finished", message: report.summary)
+            var message = report.summary
+            if useAppleIntelligence {
+                appState.autoLabeler.start(newIDs, mode: .apply, context: context, appState: appState)
+                message += "\n\nApple Intelligence is filling in the details in the background. You can keep using the app."
+            }
+            appState.alert = AppAlert(title: "Import Finished", message: message)
         }
     }
 
@@ -62,7 +81,7 @@ struct ImportCoordinator {
     }
 
     @MainActor
-    private func presentReview(of file: MetadataExchangeFile, title: String, emptyMessage: String?) {
+    func presentReview(of file: MetadataExchangeFile, title: String, emptyMessage: String?) {
         let scores = (try? context.fetch(FetchDescriptor<Score>())) ?? []
         let subjects = scores.map {
             ReviewSubject(

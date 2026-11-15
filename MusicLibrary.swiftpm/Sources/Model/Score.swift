@@ -33,8 +33,11 @@ final class Score {
     var lastOpened: Date?
     var lastPageIndex: Int = 0
 
-    /// Text read from the first pages, cached for the Claude export.
+    /// Text read from the first pages, cached for labelling.
     var extractedText: String?
+
+    /// How the details were last filled automatically (see `LabelStatus`).
+    var labelStatusRaw: String?
 
     @Relationship(deleteRule: .cascade, inverse: \SetlistEntry.score)
     var setlistEntries: [SetlistEntry]? = []
@@ -112,4 +115,19 @@ extension Score {
     }
 
     var needsLabels: Bool { metadata.isMissingEssentials }
+
+    var labelStatus: LabelStatus? {
+        get { labelStatusRaw.flatMap(LabelStatus.init(rawValue:)) }
+        set { labelStatusRaw = newValue?.rawValue }
+    }
+
+    /// Missing details, or filled automatically with low confidence.
+    var needsAttention: Bool { needsLabels || labelStatus == .autoUncertain }
+}
+
+enum LabelStatus: String {
+    /// Filled automatically and confidently.
+    case auto
+    /// Filled automatically, but worth checking.
+    case autoUncertain
 }

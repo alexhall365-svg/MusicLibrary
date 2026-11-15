@@ -9,11 +9,17 @@ struct ScoreEditorView: View {
     let score: Score
     @State private var metadata: ScoreMetadata
     @State private var confirmDelete = false
+    @State private var isFilling = false
+    @State private var fillNote: String?
+    @State private var aiStatus: AppleIntelligenceStatus = .unavailable("")
 
     init(score: Score) {
         self.score = score
         _metadata = State(initialValue: score.metadata)
     }
+
+    /// Bumped when the form is refilled, so text fields pick up the new values.
+    @State private var metadataVersion = 0
 
     var body: some View {
         NavigationStack {
@@ -36,7 +42,35 @@ struct ScoreEditorView: View {
                     }
                 }
 
+                if score.labelStatus == .autoUncertain {
+                    Section {
+                        Label("Filled in automatically. Please check these details, then tap Save.", systemImage: "exclamationmark.circle")
+                            .font(.callout)
+                            .foregroundStyle(.orange)
+                    }
+                }
+
+                if aiStatus.isAvailable {
+                    Section {
+                        Button {
+                            Task { await fillWithAppleIntelligence() }
+                        } label: {
+                            HStack {
+                                Label(isFilling ? "Reading the score…" : "Fill In with Apple Intelligence", systemImage: "sparkles")
+                                if isFilling {
+                                    Spacer()
+                                    ProgressView()
+                                }
+                            }
+                        }
+                        .disabled(isFilling)
+                    } footer: {
+                        if let fillNote { Text(fillNote) }
+                    }
+                }
+
                 MetadataFormFields(metadata: $metadata)
+                    .id(metadataVersion)
 
                 Section {
                     Button("Delete Score", role: .destructive) { confirmDelete = true }
@@ -51,11 +85,13 @@ struct ScoreEditorView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         score.metadata = metadata
+                        score.labelStatus = nil
                         try? modelContext.save()
                         dismiss()
                     }
                 }
             }
+            .onAppear { aiStatus = AppleIntelligence.status }
             .confirmationDialog("Delete this score?", isPresented: $confirmDelete, titleVisibility: .visible) {
                 Button("Delete Score", role: .destructive) {
                     let context = modelContext
@@ -69,5 +105,31 @@ struct ScoreEditorView: View {
                 Text("This removes the PDF, its annotations and its place in any setlists.")
             }
         }
+    }
+
+    private func fillWithAppleIntelligence() async {
+        guard let suggester = AppleIntelligence.makeSuggester() else {
+            fillNote = AppleIntelligence.status.message
+            return
+        }
+        isFilling = true
+        defer { isFilling = false }
+        if score.extractedText == nil {
+            score.extractedText = await TextExtractor.extractText(from: score.fileURL)
+        }
+        let input = SuggestionInput(fileName: score.originalFileName, extractedText: score.extractedText)
+        guard let suggestion = await suggester.suggest(for: input) else {
+            fillNote = "Apple Intelligence couldn't read this score."
+            return
+        }
+        metadata = AutoLabelLogic.merged(suggestion.metadata, into: metadata)
+        metadataVersion += 1
+        var note = "Filled in by Apple Intelligence"
+        if let confidence = suggestion.confidence["*"] {
+            note += " (\(Int((confidence * 100).rounded()))% sure)"
+        }
+        note += ". Check the details, then tap Save."
+        if !suggestion.flags.isEmpty { note += " Note: " + suggestion.flags.joined(separator: "; ") }
+        fillNote = note
     }
 }

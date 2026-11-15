@@ -41,7 +41,7 @@ struct ScoreCollectionView: View {
         switch scope {
         case .all: break
         case .recent: base = base.filter { $0.lastOpened != nil }
-        case .needsDetails: base = base.filter(\.needsLabels)
+        case .needsDetails: base = base.filter(\.needsAttention)
         case .facet(let value): facet = value
         }
         return LibraryFilter.apply(base, search: searchText, facet: facet, sort: sort)
@@ -178,6 +178,12 @@ struct ScoreCollectionView: View {
     private func menu(for score: Score) -> some View {
         Button("Open", systemImage: "book") { open(score) }
         Button("Edit Details", systemImage: "info.circle") { appState.editingScore = score }
+        if AppleIntelligence.status.isAvailable {
+            Button("Relabel with Apple Intelligence", systemImage: "sparkles") {
+                appState.autoLabeler.start([score.id], mode: .review, context: modelContext, appState: appState)
+            }
+            .disabled(appState.autoLabeler.isRunning)
+        }
         Menu {
             ForEach(setlists) { setlist in
                 Button(setlist.name) {
@@ -226,6 +232,11 @@ struct ScoreGridItem: View {
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
                     .lineLimit(1)
+            }
+            if score.labelStatus == .autoUncertain {
+                Label("Check details", systemImage: "exclamationmark.circle")
+                    .font(.caption2)
+                    .foregroundStyle(.orange)
             }
         }
         .contentShape(Rectangle())
