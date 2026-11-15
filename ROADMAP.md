@@ -10,6 +10,7 @@
 - [x] Versioned JSON exchange format (`docs/metadata-schema.md`)
 - [x] CI build and tests on GitHub; unsigned .ipa for sideloading
 - [x] Runs on iPad alone via Swift Playgrounds (`MusicLibrary.swiftpm`)
+- [x] Apple Intelligence labelling: automatic on import, relabel existing scores with review, per-score fill-in
 
 ## Next: Phase 2
 - [ ] **Share library with friends:** export a "share package" (selected scores or a setlist, PDFs + metadata.json, optionally annotations) that a friend imports with the existing folder/package import. Later, a live shared library via iCloud (needs a paid account).
@@ -23,7 +24,7 @@
 - [ ] Half-page turns, crop margins, bookmarks and repeat/D.S. jump links
 - [ ] Annotation text boxes, stamps (dynamics, breaths, fingering) and layers
 - [ ] Metronome and pitch pipe
-- [ ] In-app suggestions behind the `MetadataSuggester` protocol: Apple's on-device Foundation Models (the M1 iPad Pro supports Apple Intelligence on iPadOS 26), and an optional Anthropic API key stored in the Keychain
+- [ ] Optional Anthropic API key (stored in the Keychain) as another `MetadataSuggester`, for in-app Claude labelling
 - [ ] Finding public-domain scores (IMSLP, CPDL), reusing the import package and respecting each site's terms
 - [ ] iCloud sync between iPad and iPhone (paid developer account; the models are already CloudKit-compatible)
 - [ ] Automatic Google Drive backup

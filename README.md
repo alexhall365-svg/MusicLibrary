@@ -9,6 +9,7 @@ A personal iPad and iPhone app for cataloguing, annotating and performing from P
 - **Reader:** full-screen pages with tap-zone or swipe page turns, two pages side by side in landscape, a page scrubber, performance mode (locks out annotation) and resume where you left off. Upcoming pages are rendered ahead of time.
 - **Annotation:** Apple Pencil or finger, with pen, highlighter, eraser, colours, undo and redo. Annotations are stored separately; the original PDF is never changed.
 - **Setlists:** create, reorder and play straight through from one piece to the next.
+- **Apple Intelligence (iPadOS 26, on device):** new imports are filled in automatically from the first pages of each score, and anything uncertain is marked "Check details" under Needs Details. You can relabel earlier imports from **Auto-Label** (with a review screen), from a score's long-press menu, or with **Fill In with Apple Intelligence** in its details.
 - **Label with Claude:** export scores with text read from their first pages (on-device OCR for scans), have Claude fill in the details, then paste or open Claude's reply. You review every change, with low-confidence fields highlighted, before it's saved. See [docs/claude-labelling.md](docs/claude-labelling.md).
 
 See [ROADMAP.md](ROADMAP.md) for what's next.
@@ -49,4 +50,4 @@ xcodebuild test -project MusicLibrary.xcodeproj -scheme MusicLibrary \
 ```
 
 ## Data and privacy
-Everything stays on the device, in the app's Application Support folder: `Library.store` (database), `Scores/` (PDF copies) and `Annotations/`. That folder is included in the iPad's own iCloud/Finder device backup. The app makes no network requests.
+Everything stays on the device (Apple Intelligence runs on the device too), in the app's Application Support folder: `Library.store` (database), `Scores/` (PDF copies) and `Annotations/`. That folder is included in the iPad's own iCloud/Finder device backup. The app makes no network requests.
