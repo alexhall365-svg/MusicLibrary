@@ -12,7 +12,7 @@ targets:
     type: application
     platform: iOS
     sources:
-      - path: MusicLibrary
+      - path: MusicLibrary.swiftpm/Sources
     configFiles:
       Debug: Config/App.xcconfig
       Release: Config/App.xcconfig

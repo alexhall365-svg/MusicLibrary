@@ -52,6 +52,18 @@ jobs:
           ')
           echo "udid=$UDID" >> "$GITHUB_OUTPUT"
 
+      - name: Build Swift Playgrounds package
+        working-directory: MusicLibrary.swiftpm
+        run: |
+          set -o pipefail
+          xcodebuild -list
+          xcodebuild build \
+            -scheme "Music Library" \
+            -destination "id=${{ steps.sim.outputs.udid }}" \
+            -derivedDataPath ../build/swiftpm \
+            CODE_SIGNING_ALLOWED=NO \
+            -quiet 2>&1 | tee ../xcodebuild-swiftpm.log
+
       - name: Build and run tests
         run: |
           set -o pipefail
