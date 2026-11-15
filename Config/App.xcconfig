@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// App identity: the ONE place to rename the app or change its bundle ID.
+// App identity for Xcode/CI builds. Keep in step with MusicLibrary.swiftpm/Package.swift.
 // ---------------------------------------------------------------------------
 
 // The name shown under the icon on the Home Screen.

@@ -1,6 +1,26 @@
 # Installing on your iPad and iPhone
 
-You need a computer once a week to (re)install with a free Apple ID. There are two routes.
+## Route 0 (iPad only, free): Swift Playgrounds ← start here
+
+No Mac, PC, developer account or 7-day expiry. Swift Playgrounds is Apple's free app for building apps on iPad.
+
+1. **Install Swift Playgrounds** from the App Store on the iPad.
+2. **Download the code.** In Safari, sign in to github.com, open the `MusicLibrary` repository, tap **Code → Download ZIP**, and choose **Download**.
+3. **Unzip it.** Open the **Files** app → **Downloads** and tap the zip. A folder appears (e.g. `MusicLibrary-claude-jolly-volta-19ra5m`).
+4. **Move the app package somewhere permanent.** Inside that folder is **`MusicLibrary.swiftpm`** (it may show as "Music Library" with a Playgrounds icon). Long-press it → **Move** → **iCloud Drive → Playgrounds** (or **On My iPad → Playgrounds**).
+5. **Open it.** Tap `MusicLibrary.swiftpm`; it opens in Swift Playgrounds. The first time, Playgrounds builds the app, which takes a minute or two.
+6. **Run it.** Tap the **▶︎ Run** button (top of the screen). The app appears on the right. To use it full screen, tap the app preview's **full-screen** button (or drag the divider to the left).
+7. Next time, just open Swift Playgrounds and tap **Music Library** under My Apps, then ▶︎.
+
+**What's different in Playgrounds:** the app runs inside Swift Playgrounds rather than having its own Home Screen icon, and other apps' "Open in Music Library" share option isn't available. Use the app's **Import** button to bring in PDFs from Files (including Google Drive and iCloud Drive), and **Choose a JSON File…** or **Paste Claude's Reply** for labelling.
+
+**Getting updates:** download the ZIP again (steps 2–3) and replace the old `MusicLibrary.swiftpm` with the new one (same name, same place). Your scores are stored with the app's ID (`com.example.musiclibrary`), which doesn't change, so they should survive updates. Until backups exist, **try an update with a few test scores before importing your whole collection.**
+
+**Later, a proper Home Screen app:** with a paid Apple Developer membership (enrol in the Apple Developer app on the iPad), Swift Playgrounds can send the app to App Store Connect (**App Settings → Upload to App Store Connect**). You then install it through **TestFlight**, still without a computer.
+
+---
+
+The routes below need a computer once a week to reinstall with a free Apple ID.
 
 ## Route A: Sideloadly with the GitHub-built app (works with an older Mac or a Windows PC)
 

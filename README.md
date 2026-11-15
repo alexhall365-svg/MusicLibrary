@@ -1,6 +1,6 @@
 # Music Library
 
-A personal iPad and iPhone app for cataloguing, annotating and performing from PDF sheet music, with Claude-assisted bulk labelling. "Music Library" is a working name: rename it in `Config/App.xcconfig`.
+A personal iPad and iPhone app for cataloguing, annotating and performing from PDF sheet music, with Claude-assisted bulk labelling. "Music Library" is a working name: rename it in `MusicLibrary.swiftpm/Package.swift` and `Config/App.xcconfig`.
 
 ## What it does (version 0.1)
 
@@ -17,16 +17,20 @@ See [ROADMAP.md](ROADMAP.md) for what's next.
 
 | Path | What |
 | --- | --- |
-| `project.yml` | XcodeGen spec. The Xcode project is generated from it, not committed. |
-| `Config/App.xcconfig` | **App name, bundle ID and version: the one place to change them.** |
-| `MusicLibrary/` | App source: `Model`, `Storage`, `Import`, `Exchange` (JSON format), `Reader`, `Views` |
+| `MusicLibrary.swiftpm/` | **The app.** A Swift Playgrounds app package: open it on an iPad in Swift Playgrounds (or in Xcode). |
+| `MusicLibrary.swiftpm/Sources/` | App source: `Model`, `Storage`, `Import`, `Exchange` (JSON format), `Reader`, `Views`, `Resources` |
+| `project.yml` | XcodeGen spec for CI and Mac builds, using the same sources. The Xcode project is generated, not committed. |
+| `Config/App.xcconfig` + `MusicLibrary.swiftpm/Package.swift` | App name, bundle ID and version (keep the two in step). |
 | `MusicLibraryTests/` | Unit tests: metadata model, file-name parsing, JSON exchange, matching, import, setlists |
 | `docs/` | Install guide, metadata schema, Claude labelling guide |
 | `.github/workflows/ci.yml` | Builds and tests on GitHub's Macs on every push; can also build an installable `.ipa` |
 
 ## Building
 
-### On GitHub (no Mac needed)
+### On an iPad (no computer)
+Open `MusicLibrary.swiftpm` in **Swift Playgrounds** and press Run. Step-by-step instructions are in [docs/installing.md](docs/installing.md).
+
+### On GitHub
 Every push runs the tests on a macOS runner. To get an installable app:
 **Actions → CI → Run workflow** (leave "build_ipa" ticked). When it finishes, download **MusicLibrary-unsigned-ipa** from the run's Artifacts. Then follow [docs/installing.md](docs/installing.md).
 

@@ -9,10 +9,11 @@
 - [x] Bulk labelling with Claude: export with page text/OCR, forgiving import, review screen, folder packages
 - [x] Versioned JSON exchange format (`docs/metadata-schema.md`)
 - [x] CI build and tests on GitHub; unsigned .ipa for sideloading
+- [x] Runs on iPad alone via Swift Playgrounds (`MusicLibrary.swiftpm`)
 
 ## Next: Phase 2
 - [ ] **Share library with friends:** export a "share package" (selected scores or a setlist, PDFs + metadata.json, optionally annotations) that a friend imports with the existing folder/package import. Later, a live shared library via iCloud (needs a paid account).
-- [ ] **Backups:** one-file export/import of everything (database, `Scores/`, `Annotations/`) through Files/Google Drive. All user data already lives under one folder (`LibraryPaths.root`), so this is mostly zipping it.
+- [ ] **Backups (high priority while running in Swift Playgrounds):** one-file export/import of everything (database, `Scores/`, `Annotations/`) through Files/Google Drive. All user data already lives under one folder (`LibraryPaths.root`), so this is mostly zipping it.
 - [ ] Export an annotated copy of a PDF (flattened)
 - [ ] Polish from device testing
 
