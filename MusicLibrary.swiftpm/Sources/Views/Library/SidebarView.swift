@@ -65,6 +65,9 @@ struct SidebarView: View {
                 NavigationLink(value: SidebarItem.labelling) {
                     Label("Auto-Label", systemImage: "sparkles")
                 }
+                NavigationLink(value: SidebarItem.duplicates) {
+                    Label("Find Duplicates", systemImage: "doc.on.doc")
+                }
             }
         }
         .navigationTitle(AppConfig.displayName)

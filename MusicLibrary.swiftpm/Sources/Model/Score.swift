@@ -39,6 +39,9 @@ final class Score {
     /// How the details were last filled automatically (see `LabelStatus`).
     var labelStatusRaw: String?
 
+    /// A tiny image of the first page, for spotting duplicates.
+    var pageFingerprint: Data?
+
     @Relationship(deleteRule: .cascade, inverse: \SetlistEntry.score)
     var setlistEntries: [SetlistEntry]? = []
 

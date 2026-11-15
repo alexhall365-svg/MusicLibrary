@@ -7,19 +7,23 @@ import Vision
 /// Uses the PDF's own text layer when there is one, otherwise on-device text
 /// recognition (Vision) for scanned pages.
 enum TextExtractor {
-    static func extractText(from url: URL, maxPages: Int = 2, maxCharacters: Int = 1500) async -> String {
+    /// - Parameter allowOCR: false skips text recognition (fast, but scans give no text).
+    static func extractText(
+        from url: URL, maxPages: Int = 2, maxCharacters: Int = 1500, allowOCR: Bool = true
+    ) async -> String {
         await Task.detached(priority: .utility) {
-            TextExtractor.extractSynchronously(from: url, maxPages: maxPages, maxCharacters: maxCharacters)
+            TextExtractor.extractSynchronously(
+                from: url, maxPages: maxPages, maxCharacters: maxCharacters, allowOCR: allowOCR)
         }.value
     }
 
-    static func extractSynchronously(from url: URL, maxPages: Int, maxCharacters: Int) -> String {
+    static func extractSynchronously(from url: URL, maxPages: Int, maxCharacters: Int, allowOCR: Bool = true) -> String {
         guard let document = PDFDocument(url: url) else { return "" }
         var chunks: [String] = []
         for index in 0..<min(maxPages, document.pageCount) {
             guard let page = document.page(at: index) else { continue }
             var text = page.string?.trimmed ?? ""
-            if text.count < 40 {
+            if allowOCR && text.count < 40 {
                 let recognized = recognizeText(on: page)
                 if recognized.count > text.count { text = recognized }
             }

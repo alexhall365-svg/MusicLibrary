@@ -14,6 +14,17 @@ enum LibraryActions {
         ThumbnailCache.shared.remove(id)
     }
 
+    /// Deletes `duplicate`, first moving its setlist entries to `keeper`.
+    static func deleteDuplicate(_ duplicate: Score, keeping keeper: Score?, context: ModelContext) {
+        if let keeper, keeper.id != duplicate.id {
+            for entry in duplicate.setlistEntries ?? [] {
+                entry.score = keeper
+            }
+            duplicate.setlistEntries = []
+        }
+        delete(duplicate, context: context)
+    }
+
     @discardableResult
     static func createSetlist(named name: String, context: ModelContext) -> Setlist {
         let clean = name.trimmed

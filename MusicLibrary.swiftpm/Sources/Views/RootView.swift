@@ -8,6 +8,7 @@ enum SidebarItem: Hashable {
     case browse(FacetKind)
     case setlist(UUID)
     case labelling
+    case duplicates
 }
 
 struct RootView: View {
@@ -75,6 +76,8 @@ struct RootView: View {
             SetlistDetailView(setlistID: id)
         case .labelling:
             ClaudeLabellingView()
+        case .duplicates:
+            DuplicatesView()
         }
     }
 }

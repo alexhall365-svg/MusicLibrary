@@ -36,6 +36,12 @@ struct AnnotationStore {
         }
     }
 
+    func hasAnnotations(for scoreID: UUID) -> Bool {
+        let contents = try? FileManager.default.contentsOfDirectory(
+            at: paths.annotationsDirectory(for: scoreID), includingPropertiesForKeys: nil)
+        return !(contents ?? []).isEmpty
+    }
+
     func deleteAll(for scoreID: UUID) {
         try? FileManager.default.removeItem(at: paths.annotationsDirectory(for: scoreID))
     }
