@@ -18,7 +18,7 @@ final class PDFImportTests: XCTestCase {
                 context.beginPage()
                 ("\(text) page \(page + 1)" as NSString).draw(
                     at: CGPoint(x: 72, y: 72),
-                    withAttributes: [.font: UIFont.systemFont(ofSize: 24)])
+                    withAttributes: [.font: UIFont.systemFont(ofSize: 12)])
             }
         }
         return url
