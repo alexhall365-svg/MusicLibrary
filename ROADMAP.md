@@ -10,6 +10,7 @@
 - [x] Versioned JSON exchange format (`docs/metadata-schema.md`)
 - [x] CI build and tests on GitHub; unsigned .ipa for sideloading
 - [x] Runs on iPad alone via Swift Playgrounds (`MusicLibrary.swiftpm`)
+- [x] Find Duplicates (name, text and first-page similarity) with safe deletion
 - [x] Apple Intelligence labelling: automatic on import, relabel existing scores with review, per-score fill-in
 
 ## Next: Phase 2
