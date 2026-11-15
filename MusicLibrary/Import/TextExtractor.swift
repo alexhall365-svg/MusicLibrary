@@ -9,7 +9,7 @@ import Vision
 enum TextExtractor {
     static func extractText(from url: URL, maxPages: Int = 2, maxCharacters: Int = 1500) async -> String {
         await Task.detached(priority: .utility) {
-            extractSynchronously(from: url, maxPages: maxPages, maxCharacters: maxCharacters)
+            TextExtractor.extractSynchronously(from: url, maxPages: maxPages, maxCharacters: maxCharacters)
         }.value
     }
 

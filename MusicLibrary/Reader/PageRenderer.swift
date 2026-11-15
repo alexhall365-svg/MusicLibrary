@@ -23,7 +23,7 @@ final class PageRenderer: @unchecked Sendable {
         pageCount = document?.pageCount ?? 0
         var sizes: [CGSize] = []
         for index in 0..<pageCount {
-            sizes.append(document?.page(at: index).map(Self.displaySize(of:)) ?? CGSize(width: 595, height: 842))
+            sizes.append(document?.page(at: index).map(PageRenderer.displaySize(of:)) ?? CGSize(width: 595, height: 842))
         }
         pageSizes = sizes
         cache.totalCostLimit = 300 * 1024 * 1024
