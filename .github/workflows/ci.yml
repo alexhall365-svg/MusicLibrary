@@ -1,0 +1,103 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      build_ipa:
+        description: Also build an unsigned .ipa for sideloading
+        type: boolean
+        default: true
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          sw_vers
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Pick an iPad simulator
+        id: sim
+        run: |
+          UDID=$(xcrun simctl list devices available --json | python3 -c '
+          import json, re, sys
+          devices = json.load(sys.stdin)["devices"]
+          best = None
+          for runtime, items in devices.items():
+              m = re.search(r"iOS-(\d+)-(\d+)", runtime)
+              if not m:
+                  continue
+              version = (int(m.group(1)), int(m.group(2)))
+              for d in items:
+                  if "iPad" in d["name"] and (best is None or version > best[0]):
+                      best = (version, d["udid"], d["name"])
+          print(best[1])
+          sys.stderr.write("Using %s on iOS %s.%s\n" % (best[2], best[0][0], best[0][1]))
+          ')
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+
+      - name: Build and run tests
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project MusicLibrary.xcodeproj \
+            -scheme MusicLibrary \
+            -destination "id=${{ steps.sim.outputs.udid }}" \
+            -derivedDataPath build/test \
+            CODE_SIGNING_ALLOWED=NO \
+            -quiet 2>&1 | tee xcodebuild-test.log
+
+      - name: Build unsigned .ipa
+        if: >-
+          github.event_name == 'workflow_dispatch' && inputs.build_ipa ||
+          github.ref == 'refs/heads/main' ||
+          startsWith(github.ref, 'refs/tags/')
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project MusicLibrary.xcodeproj \
+            -scheme MusicLibrary \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build/device \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            -quiet 2>&1 | tee xcodebuild-ipa.log
+          mkdir -p Payload
+          cp -R build/device/Build/Products/Release-iphoneos/MusicLibrary.app Payload/
+          zip -qry MusicLibrary-unsigned.ipa Payload
+
+      - name: Upload .ipa
+        if: >-
+          github.event_name == 'workflow_dispatch' && inputs.build_ipa ||
+          github.ref == 'refs/heads/main' ||
+          startsWith(github.ref, 'refs/tags/')
+        uses: actions/upload-artifact@v4
+        with:
+          name: MusicLibrary-unsigned-ipa
+          path: MusicLibrary-unsigned.ipa
+          retention-days: 30
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: xcodebuild-*.log
+          retention-days: 7

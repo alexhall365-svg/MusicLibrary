@@ -1,0 +1,89 @@
+# XcodeGen spec. Generate the Xcode project with:  xcodegen generate
+name: MusicLibrary
+options:
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+targets:
+  MusicLibrary:
+    type: application
+    platform: iOS
+    sources:
+      - path: MusicLibrary
+    configFiles:
+      Debug: Config/App.xcconfig
+      Release: Config/App.xcconfig
+    settings:
+      base:
+        PRODUCT_NAME: MusicLibrary
+        PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID)
+        TARGETED_DEVICE_FAMILY: "1,2"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        CODE_SIGN_STYLE: Automatic
+        ENABLE_PREVIEWS: YES
+        SUPPORTS_MACCATALYST: NO
+    info:
+      path: Config/MusicLibrary-Info.plist
+      properties:
+        CFBundleDisplayName: $(APP_DISPLAY_NAME)
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        ITSAppUsesNonExemptEncryption: false
+        LSRequiresIPhoneOS: true
+        LSSupportsOpeningDocumentsInPlace: false
+        UIApplicationSupportsIndirectInputEvents: true
+        UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: PDF Document
+            CFBundleTypeRole: Viewer
+            LSHandlerRank: Alternate
+            LSItemContentTypes:
+              - com.adobe.pdf
+          - CFBundleTypeName: Library Metadata
+            CFBundleTypeRole: Viewer
+            LSHandlerRank: Alternate
+            LSItemContentTypes:
+              - public.json
+  MusicLibraryTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: MusicLibraryTests
+    dependencies:
+      - target: MusicLibrary
+    configFiles:
+      Debug: Config/App.xcconfig
+      Release: Config/App.xcconfig
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID).tests
+schemes:
+  MusicLibrary:
+    build:
+      targets:
+        MusicLibrary: all
+        MusicLibraryTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - MusicLibraryTests
+    archive:
+      config: Release

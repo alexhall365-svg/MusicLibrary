@@ -1,0 +1,17 @@
+// ---------------------------------------------------------------------------
+// App identity: the ONE place to rename the app or change its bundle ID.
+// ---------------------------------------------------------------------------
+
+// The name shown under the icon on the Home Screen.
+APP_DISPLAY_NAME = Music Library
+
+// Must be unique to you. With a free Apple ID, change "example" to something
+// personal (e.g. your initials) if Xcode says the ID is unavailable.
+APP_BUNDLE_ID = com.example.musiclibrary
+
+MARKETING_VERSION = 0.1.0
+CURRENT_PROJECT_VERSION = 1
+
+// Signing team for local Xcode builds. Leave empty and pick your
+// "Personal Team" in Xcode's Signing & Capabilities tab, or paste its ID here.
+DEVELOPMENT_TEAM =
