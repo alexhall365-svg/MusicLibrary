@@ -20,6 +20,12 @@
 - [x] Demo library and Screenshots workflow for App Store images
 - [ ] App Store listing, screenshots, rating prompt
 
+## Planned: iCloud sync and choir sharing (see docs/icloud-and-choir-plan.md)
+- [ ] Local-first iCloud sync across your own devices (CloudKit / CKSyncEngine); full local copies always, works offline
+- [ ] Shared Choir Library with lists (e.g. "Christmas season 2026"), editors, read-only members, removals propagate
+- [ ] Annotations private per person (synced across own devices); live shared annotations later
+- [ ] Pricing: own sync free; hosting a Choir Library is Pro; receiving is free
+
 ## Phase 2
 - [ ] **Share library with friends:** export a "share package" (selected scores or a setlist, PDFs + metadata.json, optionally annotations) that a friend imports with the existing folder/package import. Later, a live shared library via iCloud (needs a paid account).
 - [ ] **Backups (high priority while running in Swift Playgrounds):** one-file export/import of everything (database, `Scores/`, `Annotations/`) through Files/Google Drive. All user data already lives under one folder (`LibraryPaths.root`), so this is mostly zipping it.
