@@ -20,7 +20,7 @@ final class ProStore {
 
     @ObservationIgnored private var updatesTask: Task<Void, Never>?
 
-    nonisolated init() {
+    init() {
         #if DEBUG
         isPro = true
         #else
