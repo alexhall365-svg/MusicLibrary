@@ -1,0 +1,94 @@
+name: Screenshots
+
+# Runs the app with a demo library on an iPhone and an iPad simulator and saves
+# screenshots of the main screens (useful for checking layouts and for the App
+# Store). Run from the Actions tab or ask Claude; download "screenshots" from
+# the run's Artifacts.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  screenshots:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select newest Xcode
+        run: |
+          XCODE=$(ls -d /Applications/Xcode_*.app | grep -vi beta | sort -V | tail -1)
+          sudo xcode-select -s "$XCODE"
+          xcodebuild -version
+
+      - name: Generate project
+        run: |
+          brew install xcodegen
+          xcodegen generate
+
+      - name: Build for simulator
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project MusicLibrary.xcodeproj \
+            -scheme MusicLibrary \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build/sim \
+            CODE_SIGNING_ALLOWED=NO \
+            -quiet 2>&1 | tee build.log
+
+      - name: Take screenshots
+        run: |
+          APP=build/sim/Build/Products/Debug-iphonesimulator/MusicLibrary.app
+          BUNDLE=$(/usr/libexec/PlistBuddy -c "Print CFBundleIdentifier" "$APP/Info.plist")
+          mkdir -p shots
+          pick() {
+            xcrun simctl list devices available --json | python3 -c '
+          import json, re, sys
+          pattern = sys.argv[1]
+          devices = json.load(sys.stdin)["devices"]
+          best = None
+          for runtime, items in devices.items():
+              m = re.search(r"iOS-(\d+)-(\d+)", runtime)
+              if not m:
+                  continue
+              version = (int(m.group(1)), int(m.group(2)))
+              for d in items:
+                  if re.search(pattern, d["name"]) and (best is None or version > best[0]):
+                      best = (version, d["udid"], d["name"])
+          print(best[1] if best else "")
+          ' "$1"
+          }
+          for spec in "iphone:iPhone.*Pro Max" "ipad:iPad Pro 13"; do
+            NAME=${spec%%:*}
+            UDID=$(pick "${spec#*:}")
+            if [ -z "$UDID" ]; then echo "No simulator for $spec"; continue; fi
+            echo "== $NAME ($UDID)"
+            xcrun simctl boot "$UDID" || true
+            xcrun simctl bootstatus "$UDID" -b
+            xcrun simctl ui "$UDID" appearance light || true
+            xcrun simctl status_bar "$UDID" override --time 9:41 --batteryState charged --batteryLevel 100 --wifiBars 3 || true
+            xcrun simctl install "$UDID" "$APP"
+            for screen in library reader setlist editor labelling duplicates paywall; do
+              xcrun simctl terminate "$UDID" "$BUNDLE" 2>/dev/null || true
+              xcrun simctl launch "$UDID" "$BUNDLE" -demoLibrary YES -demoScreen "$screen"
+              sleep 9
+              xcrun simctl io "$UDID" screenshot "shots/$NAME-$screen.png"
+            done
+            xcrun simctl ui "$UDID" appearance dark || true
+            xcrun simctl terminate "$UDID" "$BUNDLE" 2>/dev/null || true
+            xcrun simctl launch "$UDID" "$BUNDLE" -demoLibrary YES -demoScreen library
+            sleep 8
+            xcrun simctl io "$UDID" screenshot "shots/$NAME-library-dark.png"
+            xcrun simctl shutdown "$UDID" || true
+          done
+          ls -la shots
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screenshots
+          path: shots
+          retention-days: 14

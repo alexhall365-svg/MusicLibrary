@@ -19,6 +19,7 @@ struct ImportCoordinator {
 
         let newIDs = report.imported.map(\.id)
         let useAppleIntelligence = report.metadataFile == nil && !newIDs.isEmpty
+            && appState.pro.isPro
             && AppleIntelligence.autoLabelOnImport && AppleIntelligence.status.isAvailable
         let isSingleClean = report.imported.count == 1 && report.duplicates.isEmpty && report.failures.isEmpty
 

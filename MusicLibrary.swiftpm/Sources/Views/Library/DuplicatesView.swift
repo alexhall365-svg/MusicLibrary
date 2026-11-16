@@ -14,6 +14,7 @@ struct DuplicatesView: View {
     @State private var progressText: String?
     @State private var confirmDelete = false
     @State private var annotated: Set<UUID> = []
+    @State private var showingPaywall = false
 
     private static let ignoredKey = "duplicates.ignoredPairs"
 
@@ -23,7 +24,11 @@ struct DuplicatesView: View {
             Section {
                 Toggle("Compare page contents", isOn: $compareContents)
                 Button {
-                    Task { await scan() }
+                    if appState.pro.isPro {
+                        Task { await scan() }
+                    } else {
+                        showingPaywall = true
+                    }
                 } label: {
                     Label(hasScanned ? "Scan Again" : "Scan Library", systemImage: "doc.on.doc")
                 }
@@ -63,6 +68,7 @@ struct DuplicatesView: View {
             }
         }
         .navigationTitle("Find Duplicates")
+        .sheet(isPresented: $showingPaywall) { PaywallView() }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button(role: .destructive) {

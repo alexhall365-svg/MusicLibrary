@@ -30,6 +30,7 @@ struct ScoreCollectionView: View {
     @State private var searchText = ""
     @State private var isDropTargeted = false
     @State private var scoreToDelete: Score?
+    @State private var showingPaywall = false
 
     private var sort: ScoreSort {
         scope == .recent ? .recentlyOpened : (ScoreSort(rawValue: sortRaw) ?? .title)
@@ -91,6 +92,7 @@ struct ScoreCollectionView: View {
                     .allowsHitTesting(false)
             }
         }
+        .sheet(isPresented: $showingPaywall) { PaywallView() }
         .confirmationDialog(
             "Delete \"\(scoreToDelete?.displayTitle ?? "")\"?",
             isPresented: Binding(get: { scoreToDelete != nil }, set: { if !$0 { scoreToDelete = nil } }),
@@ -180,7 +182,11 @@ struct ScoreCollectionView: View {
         Button("Edit Details", systemImage: "info.circle") { appState.editingScore = score }
         if AppleIntelligence.status.isAvailable {
             Button("Relabel with Apple Intelligence", systemImage: "sparkles") {
-                appState.autoLabeler.start([score.id], mode: .review, context: modelContext, appState: appState)
+                if appState.pro.isPro {
+                    appState.autoLabeler.start([score.id], mode: .review, context: modelContext, appState: appState)
+                } else {
+                    showingPaywall = true
+                }
             }
             .disabled(appState.autoLabeler.isRunning)
         }

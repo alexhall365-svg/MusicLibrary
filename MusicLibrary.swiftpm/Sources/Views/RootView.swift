@@ -15,6 +15,7 @@ struct RootView: View {
     @Environment(AppState.self) private var appState
     @Environment(\.modelContext) private var modelContext
     @State private var selection: SidebarItem? = .allScores
+    @State private var showingDemoPaywall = false
 
     var body: some View {
         @Bindable var appState = appState
@@ -56,6 +57,17 @@ struct RootView: View {
                 BusyOverlay(message: message)
             }
         }
+        .task {
+            DemoContent.prepareIfRequested(context: modelContext, appState: appState)
+            if let item = DemoContent.requestedSidebarItem(context: modelContext) {
+                selection = item
+            }
+            if UserDefaults.standard.string(forKey: "demoScreen") == "paywall"
+                && UserDefaults.standard.bool(forKey: "demoLibrary") {
+                showingDemoPaywall = true
+            }
+        }
+        .sheet(isPresented: $showingDemoPaywall) { PaywallView() }
         .onOpenURL { url in
             Task { await ImportCoordinator(context: modelContext, appState: appState).handleOpenedURL(url) }
         }

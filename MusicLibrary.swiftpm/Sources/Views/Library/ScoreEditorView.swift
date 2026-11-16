@@ -10,6 +10,8 @@ struct ScoreEditorView: View {
     @State private var metadata: ScoreMetadata
     @State private var confirmDelete = false
     @State private var isFilling = false
+    @State private var showingPaywall = false
+    @Environment(AppState.self) private var appState
     @State private var fillNote: String?
     @State private var aiStatus: AppleIntelligenceStatus = .unavailable("")
 
@@ -53,7 +55,11 @@ struct ScoreEditorView: View {
                 if aiStatus.isAvailable {
                     Section {
                         Button {
-                            Task { await fillWithAppleIntelligence() }
+                            if appState.pro.isPro {
+                                Task { await fillWithAppleIntelligence() }
+                            } else {
+                                showingPaywall = true
+                            }
                         } label: {
                             HStack {
                                 Label(isFilling ? "Reading the score…" : "Fill In with Apple Intelligence", systemImage: "sparkles")
@@ -92,6 +98,7 @@ struct ScoreEditorView: View {
                 }
             }
             .onAppear { aiStatus = AppleIntelligence.status }
+            .sheet(isPresented: $showingPaywall) { PaywallView() }
             .confirmationDialog("Delete this score?", isPresented: $confirmDelete, titleVisibility: .visible) {
                 Button("Delete Score", role: .destructive) {
                     let context = modelContext

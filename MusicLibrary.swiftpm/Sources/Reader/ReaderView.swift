@@ -42,9 +42,9 @@ struct ReaderView: View {
         .background(
             GeometryReader { proxy in
                 Color.clear
-                    .onAppear { session.setLandscape(proxy.size.width > proxy.size.height) }
+                    .onAppear { session.updateLayout(for: proxy.size) }
                     .onChange(of: proxy.size) { _, size in
-                        session.setLandscape(size.width > size.height)
+                        session.updateLayout(for: size)
                     }
             }
         )
@@ -155,6 +155,10 @@ private struct TurnZones: View {
 private struct ReaderChrome: View {
     @Bindable var session: ReaderSession
     let onClose: () -> Void
+    @Environment(\.horizontalSizeClass) private var sizeClass
+
+    /// iPhone (and narrow iPad split view): fewer, smaller controls.
+    private var isCompact: Bool { sizeClass == .compact }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -167,7 +171,7 @@ private struct ReaderChrome: View {
     }
 
     private var topBar: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: isCompact ? 6 : 12) {
             Button(action: onClose) {
                 Image(systemName: "xmark")
                     .font(.body.weight(.semibold))
@@ -179,7 +183,7 @@ private struct ReaderChrome: View {
                 Text(session.currentScore.displayTitle)
                     .font(.headline)
                     .lineLimit(1)
-                if !session.currentScore.subtitle.isEmpty {
+                if !session.currentScore.subtitle.isEmpty && !isCompact {
                     Text(session.currentScore.subtitle)
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -193,11 +197,13 @@ private struct ReaderChrome: View {
                 setlistControls
             }
 
-            Text(session.pageLabel)
-                .font(.footnote.monospacedDigit())
-                .foregroundStyle(.secondary)
+            if !isCompact {
+                Text(session.pageLabel)
+                    .font(.footnote.monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
 
-            if session.isPerformanceMode {
+            if session.isPerformanceMode && !isCompact {
                 Label("Performance", systemImage: "lock.fill")
                     .font(.caption.weight(.semibold))
                     .padding(.horizontal, 8)
@@ -205,7 +211,7 @@ private struct ReaderChrome: View {
                     .background(Color.accentColor.opacity(0.35), in: Capsule())
             }
 
-            if session.isLandscape {
+            if session.canShowTwoPages {
                 Button { session.toggleTwoUp() } label: {
                     Image(systemName: session.twoUpEnabled ? "book.pages.fill" : "book.pages")
                         .frame(width: 36, height: 36)
@@ -244,9 +250,11 @@ private struct ReaderChrome: View {
             }
             .disabled(!session.hasPreviousScore)
             .accessibilityLabel("Previous piece")
-            Text("\(session.scoreIndex + 1)/\(session.scores.count)")
-                .font(.caption.monospacedDigit())
-                .foregroundStyle(.secondary)
+            if !isCompact {
+                Text("\(session.scoreIndex + 1)/\(session.scores.count)")
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
             Button { session.nextScore() } label: {
                 Image(systemName: "forward.end.fill")
                     .frame(width: 32, height: 32)
@@ -260,7 +268,14 @@ private struct ReaderChrome: View {
 
     private var pageScrubber: some View {
         HStack {
-            Text("1").font(.caption2).foregroundStyle(.secondary)
+            if isCompact {
+                Text(session.pageLabel)
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.secondary)
+                    .fixedSize()
+            } else {
+                Text("1").font(.caption2).foregroundStyle(.secondary)
+            }
             Slider(
                 value: Binding(
                     get: { Double(session.pageIndex) },
@@ -271,7 +286,9 @@ private struct ReaderChrome: View {
             )
             .accessibilityLabel("Page")
             .accessibilityValue(session.pageLabel)
-            Text("\(session.pageCount)").font(.caption2).foregroundStyle(.secondary)
+            if !isCompact {
+                Text("\(session.pageCount)").font(.caption2).foregroundStyle(.secondary)
+            }
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 10)

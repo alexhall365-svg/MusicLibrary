@@ -98,4 +98,17 @@ final class LibraryModelTests: XCTestCase {
         session.previousPage()
         XCTAssertEqual(session.currentScore.title, "One")
     }
+
+    func testTwoPagesOnlyWhereThereIsRoom() {
+        let score = makeScore(ScoreMetadata(title: "One"))
+        let session = ReaderSession(scores: [score], startIndex: 0)
+        session.updateLayout(for: CGSize(width: 932, height: 430))   // iPhone Pro Max, landscape
+        XCTAssertFalse(session.canShowTwoPages)
+        XCTAssertEqual(session.pagesPerSpread, 1)
+        session.updateLayout(for: CGSize(width: 1366, height: 1024))  // iPad Pro 13", landscape
+        XCTAssertTrue(session.canShowTwoPages)
+        XCTAssertEqual(session.pagesPerSpread, session.twoUpEnabled ? 2 : 1)
+        session.updateLayout(for: CGSize(width: 1024, height: 1366))  // iPad portrait
+        XCTAssertEqual(session.pagesPerSpread, 1)
+    }
 }

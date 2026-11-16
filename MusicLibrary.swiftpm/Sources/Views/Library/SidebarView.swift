@@ -12,6 +12,8 @@ struct SidebarView: View {
     @State private var setlistToRename: Setlist?
     @State private var renameText = ""
     @State private var setlistToDelete: Setlist?
+    @State private var showingPaywall = false
+    @Environment(AppState.self) private var appState
 
     var body: some View {
         List(selection: $selection) {
@@ -68,9 +70,16 @@ struct SidebarView: View {
                 NavigationLink(value: SidebarItem.duplicates) {
                     Label("Find Duplicates", systemImage: "doc.on.doc")
                 }
+                Button {
+                    showingPaywall = true
+                } label: {
+                    Label(appState.pro.isPro ? "Pro Unlocked" : "Unlock Pro",
+                          systemImage: appState.pro.isPro ? "checkmark.seal" : "star.circle")
+                }
             }
         }
         .navigationTitle(AppConfig.displayName)
+        .sheet(isPresented: $showingPaywall) { PaywallView() }
         .alert("New Setlist", isPresented: $showingNewSetlist) {
             TextField("Name", text: $newSetlistName)
             Button("Create") {

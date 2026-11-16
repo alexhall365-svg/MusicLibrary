@@ -16,6 +16,12 @@ struct ClaudeLabellingView: View {
     @State private var copied = false
     @State private var aiStatus: AppleIntelligenceStatus = .unavailable("Checking…")
     @AppStorage(AppleIntelligence.autoLabelOnImportKey) private var autoLabelOnImport = true
+    @State private var showingPaywall = false
+
+    /// Runs `action` with Pro, otherwise shows the Pro screen.
+    private func withPro(_ action: () -> Void) {
+        if appState.pro.isPro { action() } else { showingPaywall = true }
+    }
 
     private var targetScores: [Score] {
         onlyMissing ? scores.filter(\.needsAttention) : scores
@@ -30,6 +36,16 @@ struct ClaudeLabellingView: View {
                 LabeledContent("Scores", value: "\(targetScores.count)")
             }
 
+            if !appState.pro.isPro {
+                Section {
+                    Button {
+                        showingPaywall = true
+                    } label: {
+                        Label("Auto-labelling is part of Pro: a one-time unlock. Tap to see what's included.", systemImage: "sparkles")
+                    }
+                }
+            }
+
             appleIntelligenceSection
 
             exportSection
@@ -38,7 +54,7 @@ struct ClaudeLabellingView: View {
 
             Section {
                 Button("Export All Library Details", systemImage: "square.and.arrow.up.on.square") {
-                    Task { await export(scores, includeText: false, stem: "Library details") }
+                    withPro { Task { await export(scores, includeText: false, stem: "Library details") } }
                 }
                 .disabled(scores.isEmpty || progressText != nil)
             } header: {
@@ -48,6 +64,7 @@ struct ClaudeLabellingView: View {
             }
         }
         .navigationTitle("Auto-Label")
+        .sheet(isPresented: $showingPaywall) { PaywallView() }
         .onAppear { aiStatus = AppleIntelligence.status }
         .fileImporter(
             isPresented: $showingFileImporter,
@@ -80,7 +97,9 @@ struct ClaudeLabellingView: View {
             Toggle("Fill in details when importing", isOn: $autoLabelOnImport)
                 .disabled(!aiStatus.isAvailable)
             Button {
-                labeler.start(targetScores.map(\.id), mode: .review, context: modelContext, appState: appState)
+                withPro {
+                    labeler.start(targetScores.map(\.id), mode: .review, context: modelContext, appState: appState)
+                }
             } label: {
                 Label("Label \(targetScores.count) Score\(targetScores.count == 1 ? "" : "s") on This iPad", systemImage: "sparkles")
             }
@@ -106,7 +125,7 @@ struct ClaudeLabellingView: View {
                 Text("All in one").tag(0)
             }
             Button {
-                Task { await export(targetScores, includeText: true, stem: "For Claude") }
+                withPro { Task { await export(targetScores, includeText: true, stem: "For Claude") } }
             } label: {
                 Label("Prepare Export", systemImage: "square.and.arrow.up")
             }
@@ -149,6 +168,10 @@ struct ClaudeLabellingView: View {
     private var importSection: some View {
         Section {
             Button("Paste Claude's Reply", systemImage: "doc.on.clipboard") {
+                guard appState.pro.isPro else {
+                    showingPaywall = true
+                    return
+                }
                 guard let text = UIPasteboard.general.string, !text.trimmed.isEmpty else {
                     appState.alert = AppAlert(
                         title: "Nothing to Paste",
@@ -158,7 +181,7 @@ struct ClaudeLabellingView: View {
                 coordinator.importMetadata(Data(text.utf8), title: "Claude's Suggestions")
             }
             Button("Choose a JSON File…", systemImage: "folder") {
-                showingFileImporter = true
+                withPro { showingFileImporter = true }
             }
         } header: {
             Text("Claude 3: Review and Import")

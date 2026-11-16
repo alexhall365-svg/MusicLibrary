@@ -1,6 +1,6 @@
 # Music Library
 
-A personal iPad and iPhone app for cataloguing, annotating and performing from PDF sheet music, with Claude-assisted bulk labelling. "Music Library" is a working name: rename it in `MusicLibrary.swiftpm/Package.swift` and `Config/App.xcconfig`.
+An iPad and iPhone app for cataloguing, annotating and performing from PDF sheet music, with Claude-assisted bulk labelling. "Music Library" is a working name: rename it in `MusicLibrary.swiftpm/Package.swift` and `Config/App.xcconfig`.
 
 ## What it does (version 0.1)
 
@@ -14,6 +14,9 @@ A personal iPad and iPhone app for cataloguing, annotating and performing from P
 - **Label with Claude:** export scores with text read from their first pages (on-device OCR for scans), have Claude fill in the details, then paste or open Claude's reply. You review every change, with low-confidence fields highlighted, before it's saved. See [docs/claude-labelling.md](docs/claude-labelling.md).
 
 See [ROADMAP.md](ROADMAP.md) for what's next.
+
+## Free and Pro
+Reading, annotating, the library, setlists and editing details are free. **Pro** (one-time in-app purchase, product ID `pro_unlock`, £3.99) unlocks Apple Intelligence labelling, Claude bulk labelling and Find Duplicates. Debug builds (Swift Playgrounds) always have Pro.
 
 ## Project layout
 

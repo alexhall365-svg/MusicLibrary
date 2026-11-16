@@ -7,6 +7,8 @@ import Observation
 final class AppState {
     /// Background labelling with Apple Intelligence.
     let autoLabeler = AutoLabeler()
+    /// The one-time Pro unlock.
+    let pro = ProStore()
 
     /// When set, the reader is shown full screen.
     var readerRequest: ReaderRequest?

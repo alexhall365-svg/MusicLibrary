@@ -10,6 +10,8 @@ final class ReaderSession {
     private(set) var renderer: PageRenderer
     private(set) var pageIndex = 0
     private(set) var isLandscape = false
+    /// Two pages only fit side by side on wide screens (iPad, not iPhone).
+    private(set) var hasRoomForTwoPages = true
     private(set) var twoUpEnabled: Bool
 
     var isAnnotating = false
@@ -39,7 +41,8 @@ final class ReaderSession {
     var isSetlist: Bool { scores.count > 1 }
     var hasNextScore: Bool { scoreIndex < scores.count - 1 }
     var hasPreviousScore: Bool { scoreIndex > 0 }
-    var pagesPerSpread: Int { twoUpEnabled && isLandscape ? 2 : 1 }
+    var pagesPerSpread: Int { twoUpEnabled && isLandscape && hasRoomForTwoPages ? 2 : 1 }
+    var canShowTwoPages: Bool { isLandscape && hasRoomForTwoPages }
 
     var visiblePages: [Int] {
         guard pageCount > 0 else { return [] }
@@ -57,9 +60,12 @@ final class ReaderSession {
 
     // MARK: Actions
 
-    func setLandscape(_ landscape: Bool) {
-        guard landscape != isLandscape else { return }
+    func updateLayout(for size: CGSize) {
+        let landscape = size.width > size.height
+        let roomy = size.width >= 900
+        guard landscape != isLandscape || roomy != hasRoomForTwoPages else { return }
         isLandscape = landscape
+        hasRoomForTwoPages = roomy
         normalize()
     }
 

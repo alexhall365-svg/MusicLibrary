@@ -14,6 +14,9 @@ struct MusicLibraryApp: App {
         WindowGroup {
             RootView()
                 .environment(appState)
+                .task {
+                    appState.pro.start()
+                }
         }
         .modelContainer(container)
     }

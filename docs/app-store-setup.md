@@ -105,8 +105,14 @@ Do this once the choir has used the TestFlight version for a few weeks. The laun
 
 1. **Agreements:** in App Store Connect → **Business**, accept the **Paid Apps Agreement**. Add your bank account, and fill in the tax form: as a UK individual this is usually the W-8BEN, which certifies you aren't a US taxpayer.
 2. **Small Business Program:** apply at developer.apple.com/app-store/small-business-program. It cuts Apple's commission from 30% to **15%**.
-3. **In-app purchase:** Claude will add the "Pro" unlock to the app. In App Store Connect → your app → **In-App Purchases** → **+**, create a **Non-Consumable** with the product ID Claude gives you and set its price.
-4. **Store listing:** in your app → **App Store** tab. Add screenshots (take them on the iPad, and the iPhone if it's supported), the description and keywords (Claude will draft them), the privacy page, the age rating questionnaire (4+), and **App Privacy** ("Data Not Collected").
+3. **In-app purchase (Pro):** in App Store Connect → your app → **Monetization → In-App Purchases** → **+**:
+   - **Type:** Non-Consumable. **Reference name:** `Pro`. **Product ID:** `pro_unlock` (exactly this).
+   - Set **Price** to **£3.99** (UK as the base; Apple suggests the other countries' prices).
+   - Turn on **Family Sharing**.
+   - Add a display name ("Pro") and description ("Auto-labelling, bulk tools and duplicates, forever").
+   - Add the review screenshot: the Pro screen (sidebar → Unlock Pro).
+   - Attach it to the app version when you submit.
+4. **Store listing:** in your app → **App Store** tab. Add screenshots for **iPhone (6.9-inch)** and **iPad (13-inch)**: run the **Screenshots** workflow on GitHub, or take them on your devices, the description and keywords (Claude will draft them), the privacy page, the age rating questionnaire (4+), and **App Privacy** ("Data Not Collected").
 5. **Countries:** under **Pricing and Availability**. Selling in the EU means declaring yourself a "trader", and your contact details are then shown publicly on EU store pages. If you'd rather not, leave EU countries unticked at first.
 6. Pick the build and tap **Add for Review** → **Submit**. **⏸** Usually 1–2 days.
 
