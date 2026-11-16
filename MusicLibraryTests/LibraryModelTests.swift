@@ -102,7 +102,7 @@ final class LibraryModelTests: XCTestCase {
     func testTwoPagesOnlyWhereThereIsRoom() {
         let score = makeScore(ScoreMetadata(title: "One"))
         let session = ReaderSession(scores: [score], startIndex: 0)
-        session.updateLayout(for: CGSize(width: 932, height: 430))   // iPhone Pro Max, landscape
+        session.updateLayout(for: CGSize(width: 956, height: 440))   // largest iPhone, landscape
         XCTAssertFalse(session.canShowTwoPages)
         XCTAssertEqual(session.pagesPerSpread, 1)
         session.updateLayout(for: CGSize(width: 1366, height: 1024))  // iPad Pro 13", landscape

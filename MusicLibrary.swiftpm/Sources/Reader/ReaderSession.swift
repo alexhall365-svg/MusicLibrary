@@ -62,7 +62,7 @@ final class ReaderSession {
 
     func updateLayout(for size: CGSize) {
         let landscape = size.width > size.height
-        let roomy = size.width >= 900
+        let roomy = size.width >= 1000  // every iPad in landscape; no iPhone (max ~956 pt)
         guard landscape != isLandscape || roomy != hasRoomForTwoPages else { return }
         isLandscape = landscape
         hasRoomForTwoPages = roomy
