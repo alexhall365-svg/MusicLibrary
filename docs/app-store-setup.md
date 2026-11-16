@@ -1,105 +1,123 @@
-# Going live: TestFlight and the App Store, all from an iPad
+# Going live: TestFlight (and later the App Store), all from an iPad
 
-The whole setup takes about an hour of tapping, spread over a few days while Apple approves things. Do the parts in order. **⏸** marks a wait.
+About **45–60 minutes** of tapping, plus Apple's waiting times. Work in order. Keep the **Notes** app open: you'll collect five values along the way.
 
-You need: your iPad, your Apple ID (with two-factor authentication on) and a payment card. A laptop is optional; it only makes Part 4 easier.
+| Value | Example | Where it comes from |
+|---|---|---|
+| App name | `Choir Library` | You choose (Step 1) |
+| Bundle ID | `uk.yoursurname.choirlibrary` | You choose (Step 1) |
+| Team ID | `AB12CD34EF` | Developer website (Step 2) |
+| Issuer ID | `69a6de7e-…` (long) | App Store Connect (Step 4) |
+| Key ID | `2X9R4HXF34` | App Store Connect (Step 4) |
+
+A laptop is optional. It only makes Step 4 easier.
 
 ---
 
-## Part 1: Join the Apple Developer Program (£79/year)
+## Step 1: Choose the name and bundle ID (5 min)
+- **App name:** what people see in TestFlight and the App Store. It must be unique on the store, up to 30 characters, and can change later. Have a back-up name ready in case your first choice is taken.
+- **Bundle ID:** permanent and never shown to users. Use lowercase letters, numbers and dots only, e.g. `uk.yoursurname.choirlibrary`. **It can never be changed** after the first upload, so don't use "musiclibrary" if you might rename the app.
 
-1. Install **Apple Developer** from the App Store and open it.
-2. Tap **Account** and sign in with your Apple ID.
-3. Tap **Enroll Now** and choose **Individual**.
-4. Follow the prompts: confirm your legal name and address, then scan your photo ID (passport or driving licence) with the iPad camera.
-5. Pay the £79 with in-app purchase.
-6. **⏸** Wait for the "Welcome to the Apple Developer Program" email. It's usually under 48 hours.
+## Step 2: Register the bundle ID and find your Team ID (5 min, Safari)
+1. Go to **developer.apple.com/account** and sign in.
+2. Scroll to **Membership details** and copy the **Team ID** (10 characters) into Notes.
+3. Go to **Certificates, IDs & Profiles** → **Identifiers** → the blue **+**.
+4. Select **App IDs** → **Continue** → **App** → **Continue**.
+5. **Description:** your app name. **Bundle ID:** keep **Explicit** and type your bundle ID exactly.
+6. Leave every capability unticked (iCloud comes in a later phase). Tap **Continue** → **Register**.
 
-## Part 2: Choose the name and bundle ID
-
-1. **App name:** what people see on the App Store. It must be unique on the store, up to 30 characters, and you can change it later.
-2. **Bundle ID:** a permanent, reverse-domain identifier such as `uk.yoursurname.choirlibrary`. Use lowercase letters, numbers and dots only. **It can never change** after the first upload.
-3. **Tell Claude both.** I'll update the code so the name is consistent everywhere.
-
-## Part 3: Create the app in Apple's systems (Safari)
-
-### 3a. Register the bundle ID
-1. In Safari, go to **developer.apple.com/account** and sign in.
-2. Open **Certificates, IDs & Profiles → Identifiers** and tap **+**.
-3. Choose **App IDs**, then **Continue** → **App** → **Continue**.
-4. **Description:** your app name. **Bundle ID:** choose **Explicit** and type the exact ID from Part 2.
-5. Leave all capabilities unticked. Tap **Continue** → **Register**.
-
-### 3b. Note your Team ID
-- Go to **developer.apple.com/account** → **Membership details**.
-- Copy the **Team ID**, a 10-character code like `AB12CD34EF`. Keep it in Notes.
-
-### 3c. Create the app record
-1. Go to **appstoreconnect.apple.com** (or use the **App Store Connect** app) → **Apps** → **+** → **New App**.
+## Step 3: Create the app in App Store Connect (5 min)
+1. Go to **appstoreconnect.apple.com** (Safari, or the App Store Connect app) → **Apps** → **+** → **New App**.
 2. Fill in:
    - **Platforms:** iOS.
-   - **Name:** your app name.
-   - **Primary language:** English (UK).
-   - **Bundle ID:** pick the one you registered.
-   - **SKU:** anything, e.g. `choirlibrary001`.
-   - **User access:** Full Access.
+   - **Name:** your app name. If it's taken, try your back-up.
+   - **Primary Language:** English (U.K.).
+   - **Bundle ID:** pick yours from the list. If it's missing, wait a minute and reload.
+   - **SKU:** any private reference, e.g. `choirlibrary001`.
+   - **User Access:** Full Access.
 3. Tap **Create**.
 
-## Part 4: Let GitHub upload builds (the API key)
+## Step 4: Create the API key that lets GitHub upload (10 min)
+1. In App Store Connect, go to **Users and Access** → the **Integrations** tab → **App Store Connect API**.
+2. If you see **Request Access**, tap it, accept, and reload.
+3. Under **Team Keys**, tap **+** (Generate API Key):
+   - **Name:** `GitHub`.
+   - **Access:** **Admin**. This is needed so GitHub can create the signing certificates for you.
+4. Copy into Notes:
+   - the **Issuer ID** (above the keys table);
+   - the new key's **Key ID**.
+5. Tap **Download API Key** → **Download**. ⚠️ **You can only download it once.** Safari saves `AuthKey_XXXXXXXXXX.p8` to **Files → Downloads**.
+6. Copy the key's text:
+   - **iPad:** Files → Downloads → long-press the `.p8` file → **Rename** → change the ending to `.txt` → **Done** → tap it to open. Tap and hold → **Select All** → **Copy**. It must include the `-----BEGIN PRIVATE KEY-----` and `-----END PRIVATE KEY-----` lines.
+   - **Laptop:** open the file in Notepad, then Ctrl+A, Ctrl+C.
 
-This is the fiddliest part. A laptop makes it easier, but the iPad is fine.
+## Step 5: Give GitHub the settings (10 min, Safari)
+1. On **github.com**, open your **MusicLibrary** repository → **Settings**. On a narrow screen it's under the **⋯** menu.
+2. In the left menu: **Secrets and variables** → **Actions**.
+3. On the **Secrets** tab, tap **New repository secret** three times. Names must match exactly (capitals and underscores):
 
-### 4a. Create the key
-1. In App Store Connect, go to **Users and Access** → **Integrations** → **App Store Connect API** → **Team Keys**.
-2. If asked, tap **Request Access** and accept.
-3. Tap **+** (Generate API Key). **Name:** `GitHub`. **Access:** **Admin**. Admin is needed so GitHub can create signing certificates for you.
-4. Copy the **Issuer ID** (shown above the list) and the new key's **Key ID** into Notes.
-5. Tap **Download API Key**. You can only do this **once**, and Safari saves the `.p8` file to **Files → Downloads**.
+   | Name | Value |
+   |---|---|
+   | `ASC_KEY_ID` | Key ID |
+   | `ASC_ISSUER_ID` | Issuer ID |
+   | `ASC_KEY_P8` | the whole key text from Step 4.6 |
 
-### 4b. Copy the key's contents
-- **On iPad:** open Files → Downloads, long-press the `AuthKey_XXXX.p8` file → **Rename** and change `.p8` to `.txt`. Open it, then **Select All → Copy**. It starts with `-----BEGIN PRIVATE KEY-----`.
-- **On a laptop:** open the file in Notepad and copy everything.
+4. On the **Variables** tab, tap **New repository variable** for each:
 
-### 4c. Add the key to GitHub
-1. In Safari, open your repository on github.com. Tap **Settings** (use the **⋯** menu on a narrow screen) → **Secrets and variables** → **Actions**.
-2. On the **Secrets** tab, add three repository secrets with **New repository secret**:
-   - `ASC_KEY_ID`: the Key ID.
-   - `ASC_ISSUER_ID`: the Issuer ID.
-   - `ASC_KEY_P8`: paste the whole key text, including the BEGIN and END lines.
-3. On the **Variables** tab, add two repository variables:
-   - `APP_BUNDLE_ID`: your bundle ID from Part 2.
-   - `APPLE_TEAM_ID`: your Team ID from 3b.
-4. Delete the `.p8`/`.txt` file from Downloads. GitHub keeps it encrypted, and nobody (including Claude) can read it back.
+   | Name | Value |
+   |---|---|
+   | `APP_BUNDLE_ID` | your bundle ID |
+   | `APPLE_TEAM_ID` | your Team ID |
+   | `APP_DISPLAY_NAME` | the name under the icon, e.g. `Choir Library` (optional; default "Music Library") |
 
-## Part 5: The first build
+5. Delete the key file from **Files → Downloads**. GitHub stores it encrypted and nobody can read it back, not even you or Claude. If you ever lose it, revoke the key in App Store Connect and make a new one.
 
-1. On GitHub: **Actions** → **TestFlight** → **Run workflow** → **Run workflow**. You can also just ask Claude to run it.
-2. **⏸** About 15 minutes for the green tick, then 5–15 minutes of processing at Apple.
-3. If it goes red, tell Claude. First runs often need a small fix, and Claude can read the logs.
+## Step 6: Run the first build (2 min, then about 30 min waiting)
+1. In the repository, go to **Actions** → **TestFlight** (left list) → **Run workflow** → **Run workflow**.
+2. Wait for the green tick: **about 15 minutes**. Then Apple processes the build for **another 5–30 minutes**. You get an email when it's ready.
+3. **If it turns red:** tell Claude "the TestFlight run failed". Claude can read the logs and fix it. First runs often need one small fix.
 
-## Part 6: TestFlight for you and the choir
+## Step 7: Install it on your iPad and iPhone (internal testing, 5 min)
+1. Install **TestFlight** from the App Store, on both devices.
+2. In App Store Connect → your app → **TestFlight** → **Internal Testing** → **+**:
+   - **Name:** `Me`.
+   - Tick **Enable automatic distribution**, so every new build reaches you.
+3. Add yourself as a tester and tap **Invite**.
+4. Open the invite email on the iPad (or open TestFlight; it may already show the app) and tap **Install**. Repeat on the iPhone.
+5. If App Store Connect ever asks about **export compliance**, answer "None of the algorithms mentioned above". The app already declares this, so it normally won't ask.
 
-### 6a. You (internal testing)
-1. Install **TestFlight** from the App Store.
-2. In App Store Connect, go to your app → **TestFlight** → **Internal Testing** → **+**. Name the group `Me` and add yourself.
-3. Turn on **automatic distribution**, so every new build reaches you.
-4. Accept the email invitation on your iPad, then install from TestFlight.
+## Step 8: Privacy policy page (5 min)
+External testers and the App Store need a public privacy policy link.
+1. Go to **gist.github.com** (signed in).
+2. **Filename:** `privacy-policy.md`. Paste the text from `docs/privacy-policy.md`, replacing `[your contact email]` with an email you're happy to share.
+3. Tap **Create public gist**, then copy the page's address into Notes.
 
-### 6b. Choir and friends (external testing)
-1. Go to **TestFlight** → **External Testing** → **+**. Name the group `Choir`.
-2. Fill in **Test Information**: a short description, your email, and a privacy policy URL (Part 7).
-3. Add your build to the group and submit it for **Beta App Review**. **⏸** This usually takes under a day.
-4. Turn on the group's **Public Link** and share it. Members install TestFlight, tap the link, and install the app. It's free for them.
-5. To release a later build to the choir: open the Choir group → **Builds** → **+**, pick the build, and add "What to Test" notes (Claude will write them for you).
+## Step 9: Invite the choir and friends (external testing; Apple's check takes up to a day)
+1. App Store Connect → your app → **TestFlight** → **External Testing** → **+**. **Name:** `Choir`.
+2. Fill in **Test Information** (left menu under TestFlight):
+   - **Beta App Description:** e.g. "A sheet-music library for our choir: import PDFs, read, annotate and play setlists."
+   - **Feedback Email:** your email.
+   - **Privacy Policy URL:** the gist link.
+   - **Contact info:** your name, phone and email (only Apple sees this).
+   - **Sign-in required:** No.
+3. In the **Choir** group → **Builds** → **+** → pick the build → add **What to Test** (Claude can write it) → **Submit for Review**.
+4. Once approved (usually within 24 hours), turn on **Public Link** in the group and copy it.
+5. Send the link to the choir and friends. On their iPhone or iPad they **install TestFlight**, **tap the link**, then **Install**. It's free, and Pro is free on TestFlight.
+6. Later builds: add each build to the Choir group the same way. New builds of the same version usually skip review.
 
-## Part 7: Privacy policy page (free)
+---
 
-The App Store and external TestFlight both need a public privacy policy link.
-1. Go to **gist.github.com** (signed in) and choose **Create public gist**.
-2. Filename: `privacy-policy.md`. Paste the text from `docs/privacy-policy.md` in this repository.
-3. Tap **Create public gist** and copy the page's address. That's your privacy policy URL. You can use the same page as the support URL, or make a second gist.
+## Troubleshooting
+| Problem | Fix |
+|---|---|
+| Run says "Not set up yet. Missing: …" | A secret or variable is missing or misspelt (Step 5) |
+| "No profiles" or "No signing certificate" | The API key isn't **Admin**, or the bundle ID in GitHub doesn't exactly match Step 2 |
+| "Invalid API key" / 401 | Wrong Key ID or Issuer ID, or the `ASC_KEY_P8` text is missing its BEGIN/END lines |
+| "Bundle ID not found" during upload | The app record (Step 3) wasn't created with this bundle ID |
+| Build uploaded but not in TestFlight | Apple is still processing; wait for the email (up to 30 minutes) |
+| Anything else | Tell Claude; it can read the run's logs |
 
-## Part 8: The App Store (when you're ready to sell)
+## Later: the App Store (when you're ready to sell)
 
 Do this once the choir has used the TestFlight version for a few weeks. The launch plan has the timing.
 
@@ -129,5 +147,5 @@ Do this once the choir has used the TestFlight version for a few weeks. The laun
 
 ## Day-to-day after setup
 - Ask Claude for a change. Claude builds and tests it, then runs **TestFlight** and the new build reaches your "Me" group automatically.
-- Happy with it? Add the build to the Choir group (Part 6b, step 5), or submit it to the App Store (Part 8, step 7).
+- Happy with it? Add the build to the Choir group (Step 9.6), or submit it to the App Store (the App Store section, step 7).
 - A monthly automatic build keeps TestFlight from expiring.
