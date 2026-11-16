@@ -4,6 +4,7 @@ import SwiftUI
 struct PaywallView: View {
     @Environment(AppState.self) private var appState
     @Environment(\.dismiss) private var dismiss
+    @State private var showingRedeem = false
 
     var body: some View {
         let pro = appState.pro
@@ -55,8 +56,11 @@ struct PaywallView: View {
                         .controlSize(.large)
                         .disabled(pro.isPurchasing)
 
-                        Button("Restore Purchase") {
-                            Task { await pro.restore() }
+                        HStack(spacing: 24) {
+                            Button("Redeem Code") { showingRedeem = true }
+                            Button("Restore Purchase") {
+                                Task { await pro.restore() }
+                            }
                         }
                         .font(.callout)
                     }
@@ -83,6 +87,9 @@ struct PaywallView: View {
                 }
             }
             .task { if pro.product == nil { await pro.loadProduct() } }
+            .offerCodeRedemption(isPresented: $showingRedeem) { result in
+                Task { await pro.codeRedemptionFinished(result) }
+            }
         }
     }
 

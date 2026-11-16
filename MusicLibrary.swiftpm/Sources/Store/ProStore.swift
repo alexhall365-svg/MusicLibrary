@@ -99,6 +99,19 @@ final class ProStore {
         }
     }
 
+    /// Called after the App Store's code redemption sheet closes.
+    func codeRedemptionFinished(_ result: Result<Void, Error>) async {
+        switch result {
+        case .success:
+            await refreshEntitlement()
+            if isPro {
+                message = "Code redeemed. Pro is unlocked."
+            }
+        case .failure(let error):
+            message = error.localizedDescription
+        }
+    }
+
     func restore() async {
         do {
             try await AppStore.sync()

@@ -6,6 +6,7 @@
 - **The choir never pays.** Members use the TestFlight version, which is free. On the App Store, everything a choir member needs (library, reader, annotations, setlists, receiving shared choir music) is free forever.
 - **Charge only for librarian power tools.** People who manage big collections pay once, at a fraction of competitors' prices.
 - **No subscriptions, no ads, no data collection.**
+- **Free Pro for chosen people** with Apple offer codes (see `docs/app-store-setup.md`, Part 8 step 4). Choir members on TestFlight get it free anyway.
 
 ## Pricing
 

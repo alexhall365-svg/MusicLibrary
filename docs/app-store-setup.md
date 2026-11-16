@@ -112,13 +112,22 @@ Do this once the choir has used the TestFlight version for a few weeks. The laun
    - Add a display name ("Pro") and description ("Auto-labelling, bulk tools and duplicates, forever").
    - Add the review screenshot: the Pro screen (sidebar → Unlock Pro).
    - Attach it to the app version when you submit.
-4. **Store listing:** in your app → **App Store** tab. Add screenshots for **iPhone (6.9-inch)** and **iPad (13-inch)**: run the **Screenshots** workflow on GitHub, or take them on your devices, the description and keywords (Claude will draft them), the privacy page, the age rating questionnaire (4+), and **App Privacy** ("Data Not Collected").
-5. **Countries:** under **Pricing and Availability**. Selling in the EU means declaring yourself a "trader", and your contact details are then shown publicly on EU store pages. If you'd rather not, leave EU countries unticked at first.
-6. Pick the build and tap **Add for Review** → **Submit**. **⏸** Usually 1–2 days.
+4. **Codes for free Pro (you, friends, the choir):** Apple's **offer codes** give Pro for free. They can be created once the app is live on the store and the Pro purchase has been approved.
+   1. In App Store Connect, go to your app → **Monetization → In-App Purchases → Pro** → **Offer Codes** → **Create Offer Code**.
+   2. Choose **Free** and the countries.
+   3. Choose the kind of code:
+      - **Custom code:** one word you choose, e.g. `EVENSONG2026`. Set a redemption limit (e.g. 25) and an expiry date. Good for a group: share it once.
+      - **One-time codes:** Apple generates a list of unique codes, one per person. Good for giving to individuals; download the list and hand them out.
+   4. People redeem in the app: **Unlock Pro → Redeem Code**, then type the code. They can also use the App Store app: tap their account picture → **Redeem Gift Card or Code**.
+   - Redeemed codes count as a £0 purchase. They work with **Restore Purchase** and Family Sharing like a normal purchase.
+   - On **TestFlight**, nobody needs a code: Pro "purchases" there are free test purchases.
+5. **Store listing:** in your app → **App Store** tab. Add screenshots for **iPhone (6.9-inch)** and **iPad (13-inch)**: run the **Screenshots** workflow on GitHub, or take them on your devices, the description and keywords (Claude will draft them), the privacy page, the age rating questionnaire (4+), and **App Privacy** ("Data Not Collected").
+6. **Countries:** under **Pricing and Availability**. Selling in the EU means declaring yourself a "trader", and your contact details are then shown publicly on EU store pages. If you'd rather not, leave EU countries unticked at first.
+7. Pick the build and tap **Add for Review** → **Submit**. **⏸** Usually 1–2 days.
 
 ---
 
 ## Day-to-day after setup
 - Ask Claude for a change. Claude builds and tests it, then runs **TestFlight** and the new build reaches your "Me" group automatically.
-- Happy with it? Add the build to the Choir group (Part 6b, step 5), or submit it to the App Store (Part 8, step 6).
+- Happy with it? Add the build to the Choir group (Part 6b, step 5), or submit it to the App Store (Part 8, step 7).
 - A monthly automatic build keeps TestFlight from expiring.
