@@ -253,6 +253,7 @@ struct ScoreGridItem: View {
 
 struct ScoreListRow: View {
     let score: Score
+    @Environment(\.horizontalSizeClass) private var sizeClass
 
     var body: some View {
         HStack(spacing: 12) {
@@ -271,7 +272,7 @@ struct ScoreListRow: View {
                     .lineLimit(1)
             }
             Spacer()
-            if !score.scoring.isEmpty {
+            if !score.scoring.isEmpty && sizeClass != .compact {
                 Text(score.scoring)
                     .font(.caption)
                     .foregroundStyle(.secondary)
