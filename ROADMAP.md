@@ -26,6 +26,10 @@
 - [ ] Annotations private per person (synced across own devices); live shared annotations later
 - [ ] Pricing: own sync free; hosting a Choir Library is Pro; receiving is free
 
+## Idea: downloadable score packs (see docs/score-packs-plan.md)
+- [ ] Ready-labelled public-domain packs (e.g. Bach Organ Works, Evensong Essentials), bought once or included with Pro; no subscription
+- [ ] Packs reuse the existing folder/package import; rights checked per file (public domain in the UK/EU, or a licence that allows selling)
+
 ## Phase 2
 - [ ] **Share library with friends:** export a "share package" (selected scores or a setlist, PDFs + metadata.json, optionally annotations) that a friend imports with the existing folder/package import. Later, a live shared library via iCloud (needs a paid account).
 - [ ] **Backups (high priority while running in Swift Playgrounds):** one-file export/import of everything (database, `Scores/`, `Annotations/`) through Files/Google Drive. All user data already lives under one folder (`LibraryPaths.root`), so this is mostly zipping it.
