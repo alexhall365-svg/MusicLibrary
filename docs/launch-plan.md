@@ -33,7 +33,7 @@ That's roughly **90% cheaper** than forScore in year one, and far cheaper than s
 ## Month 1: choir beta and getting store-ready
 
 **Week 1**
-- [ ] Enrol in the Developer Program and complete `docs/app-store-setup.md` Parts 1–7.
+- [ ] Enrol in the Developer Program and complete `docs/app-store-setup.md` Steps 1–9.
 - [ ] Claude: first TestFlight build. Fix anything the first run shows.
 - [ ] Invite the choir through the public TestFlight link. Ask for feedback with TestFlight screenshots.
 
