@@ -28,11 +28,11 @@ enum DemoContent {
         guard defaults.bool(forKey: "demoLibrary") else { return }
         let existing = (try? context.fetch(FetchDescriptor<Score>())) ?? []
         let scores = existing.isEmpty ? seed(context: context) : existing
-        let setlists = (try? context.fetch(FetchDescriptor<Setlist>())) ?? []
+        let setlist = fullestSetlist(context: context)
 
         switch defaults.string(forKey: "demoScreen") {
         case "reader":
-            if let setlist = setlists.first {
+            if let setlist {
                 appState.readerRequest = ReaderRequest(scores: setlist.orderedScores, startIndex: 1)
             }
         case "editor":
@@ -51,8 +51,7 @@ enum DemoContent {
         guard defaults.bool(forKey: "demoLibrary") else { return nil }
         switch defaults.string(forKey: "demoScreen") {
         case "setlist":
-            let setlists = (try? context.fetch(FetchDescriptor<Setlist>())) ?? []
-            return setlists.first.map { .setlist($0.id) }
+            return fullestSetlist(context: context).map { .setlist($0.id) }
         case "labelling":
             return .labelling
         case "duplicates":
@@ -60,6 +59,11 @@ enum DemoContent {
         default:
             return nil
         }
+    }
+
+    private static func fullestSetlist(context: ModelContext) -> Setlist? {
+        let setlists = (try? context.fetch(FetchDescriptor<Setlist>())) ?? []
+        return setlists.max { ($0.entries?.count ?? 0) < ($1.entries?.count ?? 0) }
     }
 
     private static func seed(context: ModelContext) -> [Score] {

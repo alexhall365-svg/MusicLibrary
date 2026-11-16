@@ -30,7 +30,7 @@ struct ClaudeLabellingView: View {
     var body: some View {
         Form {
             Section {
-                Text("Fill in titles, composers and more for many scores at once. Apple Intelligence works on this iPad, privately and offline. Claude is more thorough with tricky scans. Either way, you review the suggestions before they're saved.")
+                Text("Fill in titles, composers and more for many scores at once. Apple Intelligence works on this \(UIDevice.current.model), privately and offline. Claude is more thorough with tricky scans. Either way, you review the suggestions before they're saved.")
                     .font(.callout)
                 Toggle("Only scores that need details", isOn: $onlyMissing)
                 LabeledContent("Scores", value: "\(targetScores.count)")
@@ -84,11 +84,16 @@ struct ClaudeLabellingView: View {
     private var appleIntelligenceSection: some View {
         let labeler = appState.autoLabeler
         return Section {
-            LabeledContent("Status") {
-                Label(aiStatus.isAvailable ? "Ready" : "Unavailable",
-                      systemImage: aiStatus.isAvailable ? "checkmark.circle.fill" : "xmark.circle")
-                    .foregroundStyle(aiStatus.isAvailable ? .green : .secondary)
+            HStack {
+                Text("Status")
+                Spacer()
+                Image(systemName: aiStatus.isAvailable ? "checkmark.circle.fill" : "xmark.circle")
+                    .foregroundStyle(aiStatus.isAvailable ? Color.green : Color.secondary)
+                    .accessibilityHidden(true)
+                Text(aiStatus.isAvailable ? "Ready" : "Unavailable")
+                    .foregroundStyle(aiStatus.isAvailable ? Color.green : Color.secondary)
             }
+            .accessibilityElement(children: .combine)
             if !aiStatus.isAvailable {
                 Text(aiStatus.message)
                     .font(.footnote)
@@ -101,7 +106,7 @@ struct ClaudeLabellingView: View {
                     labeler.start(targetScores.map(\.id), mode: .review, context: modelContext, appState: appState)
                 }
             } label: {
-                Label("Label \(targetScores.count) Score\(targetScores.count == 1 ? "" : "s") on This iPad", systemImage: "sparkles")
+                Label("Label \(targetScores.count) Score\(targetScores.count == 1 ? "" : "s") on This \(UIDevice.current.model)", systemImage: "sparkles")
             }
             .disabled(!aiStatus.isAvailable || labeler.isRunning || targetScores.isEmpty)
             if labeler.isRunning {

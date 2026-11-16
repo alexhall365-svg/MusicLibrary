@@ -28,7 +28,12 @@ struct RootView: View {
             .id(selection)
         }
         .fullScreenCover(item: $appState.readerRequest) { request in
-            ReaderView(request: request)
+            if request.scores.isEmpty {
+                // Nothing to show (e.g. an empty setlist): close straight away.
+                Color.clear.onAppear { appState.readerRequest = nil }
+            } else {
+                ReaderView(request: request)
+            }
         }
         .sheet(item: $appState.review) { review in
             MetadataReviewView(review: review)
