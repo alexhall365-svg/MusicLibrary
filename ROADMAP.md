@@ -13,7 +13,12 @@
 - [x] Find Duplicates (name, text and first-page similarity) with safe deletion
 - [x] Apple Intelligence labelling: automatic on import, relabel existing scores with review, per-score fill-in
 
-## Next: Phase 2
+## Next: going public (see docs/launch-plan.md)
+- [x] Signed TestFlight/App Store pipeline (GitHub Actions), privacy manifest, privacy policy
+- [ ] Pro unlock (one-time £2.99): AI labelling, Claude bulk tools, duplicates, backup
+- [ ] App Store listing, screenshots, rating prompt
+
+## Phase 2
 - [ ] **Share library with friends:** export a "share package" (selected scores or a setlist, PDFs + metadata.json, optionally annotations) that a friend imports with the existing folder/package import. Later, a live shared library via iCloud (needs a paid account).
 - [ ] **Backups (high priority while running in Swift Playgrounds):** one-file export/import of everything (database, `Scores/`, `Annotations/`) through Files/Google Drive. All user data already lives under one folder (`LibraryPaths.root`), so this is mostly zipping it.
 - [ ] Export an annotated copy of a PDF (flattened)

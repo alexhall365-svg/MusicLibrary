@@ -1,0 +1,125 @@
+name: TestFlight
+
+# Builds, signs and uploads the app to App Store Connect / TestFlight.
+# Run it from the Actions tab ("Run workflow"), or ask Claude to run it.
+# It also runs monthly so TestFlight builds never reach their 90-day expiry.
+#
+# One-off setup (see docs/app-store-setup.md):
+#   Repository variables: APP_BUNDLE_ID, APPLE_TEAM_ID
+#   Repository secrets:   ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 4 1 * *"
+
+concurrency:
+  group: testflight
+  cancel-in-progress: false
+
+jobs:
+  upload:
+    runs-on: macos-15
+    timeout-minutes: 45
+    env:
+      APP_BUNDLE_ID: ${{ vars.APP_BUNDLE_ID }}
+      TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check setup
+        env:
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          missing=""
+          [ -n "$APP_BUNDLE_ID" ] || missing="$missing APP_BUNDLE_ID(variable)"
+          [ -n "$TEAM_ID" ] || missing="$missing APPLE_TEAM_ID(variable)"
+          [ -n "$ASC_KEY_ID" ] || missing="$missing ASC_KEY_ID(secret)"
+          [ -n "$ASC_ISSUER_ID" ] || missing="$missing ASC_ISSUER_ID(secret)"
+          [ -n "$ASC_KEY_P8" ] || missing="$missing ASC_KEY_P8(secret)"
+          if [ -n "$missing" ]; then
+            echo "::error::Not set up yet. Missing:$missing. Follow docs/app-store-setup.md."
+            exit 1
+          fi
+
+      - name: Select newest Xcode
+        run: |
+          XCODE=$(ls -d /Applications/Xcode_*.app | grep -vi beta | sort -V | tail -1)
+          echo "Selecting $XCODE"
+          sudo xcode-select -s "$XCODE"
+          xcodebuild -version
+
+      - name: Generate Xcode project
+        run: |
+          brew install xcodegen
+          xcodegen generate
+
+      - name: Install App Store Connect key
+        env:
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/keys"
+          printf '%s\n' "$ASC_KEY_P8" > "$RUNNER_TEMP/keys/AuthKey_$ASC_KEY_ID.p8"
+          echo "ASC_KEY_PATH=$RUNNER_TEMP/keys/AuthKey_$ASC_KEY_ID.p8" >> "$GITHUB_ENV"
+          echo "BUILD_NUMBER=$(( ${{ github.run_number }} + 100 ))" >> "$GITHUB_ENV"
+
+      - name: Archive (signed)
+        run: |
+          set -o pipefail
+          xcodebuild archive \
+            -project MusicLibrary.xcodeproj \
+            -scheme MusicLibrary \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/MusicLibrary.xcarchive" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$ASC_KEY_PATH" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            APP_BUNDLE_ID="$APP_BUNDLE_ID" \
+            DEVELOPMENT_TEAM="$TEAM_ID" \
+            CODE_SIGN_STYLE=Automatic \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
+            -quiet 2>&1 | tee archive.log
+
+      - name: Upload to App Store Connect
+        run: |
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>$TEAM_ID</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>uploadSymbols</key><true/>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+          </dict>
+          </plist>
+          PLIST
+          set -o pipefail
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/MusicLibrary.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -exportPath "$RUNNER_TEMP/export" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$ASC_KEY_PATH" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            2>&1 | tee upload.log
+          echo "Uploaded build $BUILD_NUMBER. It appears in TestFlight after Apple's processing (usually 5–15 minutes)."
+
+      - name: Remove key
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/keys"
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: testflight-logs
+          path: "*.log"
+          retention-days: 7

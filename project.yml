@@ -13,6 +13,8 @@ targets:
     platform: iOS
     sources:
       - path: MusicLibrary.swiftpm/Sources
+      - path: Config/PrivacyInfo.xcprivacy
+        buildPhase: resources
     configFiles:
       Debug: Config/App.xcconfig
       Release: Config/App.xcconfig
@@ -33,6 +35,7 @@ targets:
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         ITSAppUsesNonExemptEncryption: false
+        LSApplicationCategoryType: public.app-category.music
         LSRequiresIPhoneOS: true
         LSSupportsOpeningDocumentsInPlace: false
         UIApplicationSupportsIndirectInputEvents: true

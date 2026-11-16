@@ -1,5 +1,7 @@
 # Installing on your iPad and iPhone
 
+> **With an Apple Developer membership**, install through **TestFlight** instead: see [app-store-setup.md](app-store-setup.md). The routes below are for development without a membership.
+
 ## Route 0 (iPad only, free): Swift Playgrounds ← start here
 
 No Mac, PC, developer account or 7-day expiry. Swift Playgrounds is Apple's free app for building apps on iPad.

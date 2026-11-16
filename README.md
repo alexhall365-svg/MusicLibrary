@@ -27,6 +27,9 @@ See [ROADMAP.md](ROADMAP.md) for what's next.
 | `docs/` | Install guide, metadata schema, Claude labelling guide |
 | `.github/workflows/ci.yml` | Builds and tests on GitHub's Macs on every push; can also build an installable `.ipa` |
 
+## Releasing (TestFlight and App Store)
+See [docs/app-store-setup.md](docs/app-store-setup.md) for the one-off iPad setup. After that, the **TestFlight** workflow (Actions → TestFlight → Run workflow) builds, signs and uploads a new version. The plan for covering costs is in [docs/launch-plan.md](docs/launch-plan.md).
+
 ## Building
 
 ### On an iPad (no computer)
