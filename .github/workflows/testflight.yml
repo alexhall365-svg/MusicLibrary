@@ -23,7 +23,7 @@ jobs:
     timeout-minutes: 45
     env:
       APP_BUNDLE_ID: ${{ vars.APP_BUNDLE_ID }}
-      APP_DISPLAY_NAME: ${{ vars.APP_DISPLAY_NAME || 'Music Library' }}
+      APP_DISPLAY_NAME: ${{ vars.APP_DISPLAY_NAME || 'Quire' }}
       TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
       ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
       ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}

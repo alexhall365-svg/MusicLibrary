@@ -1,10 +1,10 @@
-# Music Library
+# Quire
 
-An iPad and iPhone app for cataloguing, annotating and performing from PDF sheet music, with Claude-assisted bulk labelling. "Music Library" is a working name: rename it in `MusicLibrary.swiftpm/Package.swift` and `Config/App.xcconfig`.
+An iPad and iPhone app for cataloguing, annotating and performing from PDF sheet music, with Claude-assisted bulk labelling. The display name and bundle ID live in `Config/App.xcconfig` (and `MusicLibrary.swiftpm/Package.swift` for Swift Playgrounds); the project folders keep their original "MusicLibrary" names.
 
 ## What it does (version 0.1)
 
-- **Library:** import PDFs from Files, the share sheet ("Open in Music Library"), drag and drop, or a whole folder. Duplicates are skipped by content hash. The library has a grid or list view, search (ignores case and accents), sorting, and browsing by composer, genre, voicing and tag.
+- **Library:** import PDFs from Files, the share sheet ("Open in Quire"), drag and drop, or a whole folder. Duplicates are skipped by content hash. The library has a grid or list view, search (ignores case and accents), sorting, and browsing by composer, genre, voicing and tag.
 - **Details:** title, composer, catalogue number, voicing/instrumentation, key, genre, tags and notes, plus your own custom fields.
 - **Reader:** full-screen pages with tap-zone or swipe page turns, two pages side by side in landscape, a page scrubber, performance mode (locks out annotation) and resume where you left off. Upcoming pages are rendered ahead of time.
 - **Annotation:** Apple Pencil or finger, with pen, highlighter, eraser, colours, undo and redo. Annotations are stored separately; the original PDF is never changed.

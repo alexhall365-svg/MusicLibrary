@@ -64,7 +64,7 @@ jobs:
           set -o pipefail
           xcodebuild -list
           xcodebuild build \
-            -scheme "Music Library" \
+            -scheme "Quire" \
             -destination "id=${{ steps.sim.outputs.udid }}" \
             -derivedDataPath ../build/swiftpm \
             CODE_SIGNING_ALLOWED=NO \

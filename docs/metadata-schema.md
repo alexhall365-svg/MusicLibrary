@@ -7,7 +7,7 @@ This JSON format is the contract between the app and Claude (or any other tool).
   "schema": "music-library-metadata",
   "version": 1,
   "exportedAt": "2026-11-15T20:00:00Z",
-  "generator": "Music Library 0.1.0",
+  "generator": "Quire 0.1.0",
   "instructionsForClaude": "…present only in exports for labelling…",
   "scores": [
     {

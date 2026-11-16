@@ -4,8 +4,8 @@ About **45–60 minutes** of tapping, plus Apple's waiting times. Work in order.
 
 | Value | Example | Where it comes from |
 |---|---|---|
-| App name | `Choir Library` | You choose (Step 1) |
-| Bundle ID | `uk.yoursurname.choirlibrary` | You choose (Step 1) |
+| App name | `Quire` (or `Quire: Choir Music` if taken) | You choose (Step 1) |
+| Bundle ID | `uk.yoursurname.quire` | You choose (Step 1) |
 | Team ID | `AB12CD34EF` | Developer website (Step 2) |
 | Issuer ID | `69a6de7e-…` (long) | App Store Connect (Step 4) |
 | Key ID | `2X9R4HXF34` | App Store Connect (Step 4) |
@@ -16,7 +16,7 @@ A laptop is optional. It only makes Step 4 easier.
 
 ## Step 1: Choose the name and bundle ID (5 min)
 - **App name:** what people see in TestFlight and the App Store. It must be unique on the store, up to 30 characters, and can change later. Have a back-up name ready in case your first choice is taken.
-- **Bundle ID:** permanent and never shown to users. Use lowercase letters, numbers and dots only, e.g. `uk.yoursurname.choirlibrary`. **It can never be changed** after the first upload, so don't use "musiclibrary" if you might rename the app.
+- **Bundle ID:** permanent and never shown to users. Use lowercase letters, numbers and dots only, e.g. `uk.yoursurname.quire`. **It can never be changed** after the first upload, so pick one you're happy with for good.
 
 ## Step 2: Register the bundle ID and find your Team ID (5 min, Safari)
 1. Go to **developer.apple.com/account** and sign in.
@@ -33,7 +33,7 @@ A laptop is optional. It only makes Step 4 easier.
    - **Name:** your app name. If it's taken, try your back-up.
    - **Primary Language:** English (U.K.).
    - **Bundle ID:** pick yours from the list. If it's missing, wait a minute and reload.
-   - **SKU:** any private reference, e.g. `choirlibrary001`.
+   - **SKU:** any private reference, e.g. `quire001`.
    - **User Access:** Full Access.
 3. Tap **Create**.
 
@@ -68,7 +68,7 @@ A laptop is optional. It only makes Step 4 easier.
    |---|---|
    | `APP_BUNDLE_ID` | your bundle ID |
    | `APPLE_TEAM_ID` | your Team ID |
-   | `APP_DISPLAY_NAME` | the name under the icon, e.g. `Choir Library` (optional; default "Music Library") |
+   | `APP_DISPLAY_NAME` | the name under the icon: `Quire` (optional; already the default) |
 
 5. Delete the key file from **Files → Downloads**. GitHub stores it encrypted and nobody can read it back, not even you or Claude. If you ever lose it, revoke the key in App Store Connect and make a new one.
 

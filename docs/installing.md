@@ -9,12 +9,12 @@ No Mac, PC, developer account or 7-day expiry. Swift Playgrounds is Apple's free
 1. **Install Swift Playgrounds** from the App Store on the iPad.
 2. **Download the code.** In Safari, sign in to github.com, open the `MusicLibrary` repository, tap **Code → Download ZIP**, and choose **Download**.
 3. **Unzip it.** Open the **Files** app → **Downloads** and tap the zip. A folder appears (e.g. `MusicLibrary-claude-jolly-volta-19ra5m`).
-4. **Move the app package somewhere permanent.** Inside that folder is **`MusicLibrary.swiftpm`** (it may show as "Music Library" with a Playgrounds icon). Long-press it → **Move** → **iCloud Drive → Playgrounds** (or **On My iPad → Playgrounds**).
+4. **Move the app package somewhere permanent.** Inside that folder is **`MusicLibrary.swiftpm`** (it may show as "Quire" with a Playgrounds icon). Long-press it → **Move** → **iCloud Drive → Playgrounds** (or **On My iPad → Playgrounds**).
 5. **Open it.** Tap `MusicLibrary.swiftpm`; it opens in Swift Playgrounds. The first time, Playgrounds builds the app, which takes a minute or two.
 6. **Run it.** Tap the **▶︎ Run** button (top of the screen). The app appears on the right. To use it full screen, tap the app preview's **full-screen** button (or drag the divider to the left).
-7. Next time, just open Swift Playgrounds and tap **Music Library** under My Apps, then ▶︎.
+7. Next time, just open Swift Playgrounds and tap **Quire** under My Apps, then ▶︎.
 
-**What's different in Playgrounds:** the app runs inside Swift Playgrounds rather than having its own Home Screen icon, and other apps' "Open in Music Library" share option isn't available. Use the app's **Import** button to bring in PDFs from Files (including Google Drive and iCloud Drive), and **Choose a JSON File…** or **Paste Claude's Reply** for labelling.
+**What's different in Playgrounds:** the app runs inside Swift Playgrounds rather than having its own Home Screen icon, and other apps' "Open in Quire" share option isn't available. Use the app's **Import** button to bring in PDFs from Files (including Google Drive and iCloud Drive), and **Choose a JSON File…** or **Paste Claude's Reply** for labelling.
 
 **Getting updates:** download the ZIP again (steps 2–3) and replace the old `MusicLibrary.swiftpm` with the new one (same name, same place). Your scores are stored with the app's ID (`com.example.musiclibrary`), which doesn't change, so they should survive updates. Until backups exist, **try an update with a few test scores before importing your whole collection.**
 
@@ -34,7 +34,7 @@ Your 2016 Mac can't run a recent enough Xcode, but it can run **Sideloadly**, wh
 4. In Sideloadly, drag in the `.ipa`, type your Apple ID, and press **Start**. Enter your Apple ID password when asked. It is sent only to Apple. Approve any two-factor code.
 5. **On the iPad**, turn on Developer Mode: **Settings → Privacy & Security → Developer Mode → On**. The iPad restarts; confirm **Turn On** afterwards. (The option only appears after the first sideload attempt.)
 6. **Trust the developer:** **Settings → General → VPN & Device Management →** your Apple ID **→ Trust**.
-7. Open **Music Library**.
+7. Open **Quire**.
 
 Repeat steps 3–7 for the iPhone.
 

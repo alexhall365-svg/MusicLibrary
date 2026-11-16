@@ -4,7 +4,7 @@ import Foundation
 /// set in `Config/App.xcconfig`; this reads them back at runtime.
 enum AppConfig {
     static var displayName: String {
-        Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String ?? "Music Library"
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String ?? "Quire"
     }
 
     static var version: String {

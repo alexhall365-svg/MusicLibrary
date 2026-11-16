@@ -11,13 +11,13 @@ import PackageDescription
 import AppleProductTypes
 
 let package = Package(
-    name: "Music Library",
+    name: "Quire",
     platforms: [
         .iOS("17.0")
     ],
     products: [
         .iOSApplication(
-            name: "Music Library",
+            name: "Quire",
             targets: ["AppModule"],
             bundleIdentifier: "com.example.musiclibrary",
             teamIdentifier: "",

@@ -12,7 +12,7 @@ enum ExchangeError: LocalizedError, Equatable {
         case .newerVersion(let version):
             return "This file uses format version \(version), which is newer than this app understands (\(MetadataExchangeFile.currentVersion)). Please update the app."
         case .invalid(let detail):
-            return "This doesn't look like Music Library metadata. \(detail)"
+            return "This doesn't look like Quire library details. \(detail)"
         }
     }
 }

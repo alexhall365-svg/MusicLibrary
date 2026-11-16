@@ -3,7 +3,7 @@
 // ---------------------------------------------------------------------------
 
 // The name shown under the icon on the Home Screen.
-APP_DISPLAY_NAME = Music Library
+APP_DISPLAY_NAME = Quire
 
 // Must be unique to you. With a free Apple ID, change "example" to something
 // personal (e.g. your initials) if Xcode says the ID is unavailable.

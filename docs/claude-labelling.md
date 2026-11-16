@@ -22,7 +22,7 @@ This route needs no API key; it uses your normal Claude subscription.
 2. Open **Auto-Label** in the sidebar and scroll to the Claude sections.
 3. **Export:** leave "Only scores that need details" on, pick "50 per file" and tap **Prepare Export**. The app reads the first two pages of each score, using on-device text recognition for scans. The first time, this can take a few seconds per scan. Each file then appears in the list.
 4. **Ask Claude:** tap a file → share to the **Claude** app (or save to Files and attach it). In a **new chat**, attach the file, tap **Copy Message** in the app, paste it into Claude and send. The detailed instructions travel inside the file.
-5. **Bring the answer back:** use the copy button under Claude's reply (or under its code block), return to the app and tap **Paste Claude's Reply**. Alternatively, save Claude's JSON as a file and use **Choose a JSON File…**, or open a `.json` file with Music Library from Files.
+5. **Bring the answer back:** use the copy button under Claude's reply (or under its code block), return to the app and tap **Paste Claude's Reply**. Alternatively, save Claude's JSON as a file and use **Choose a JSON File…**, or open a `.json` file with Quire from Files.
 6. **Review:** every change is listed, old → new. Fields Claude was less than 70% sure of, and anything it flagged, are highlighted. Switch to **Needs Checking** to see only those. Untick a score to skip it, or tap **Edit** to correct it, then tap **Apply**.
 
 Repeat for each file. One file per chat keeps each reply within Claude's output limits; around 50 scores per file works well.

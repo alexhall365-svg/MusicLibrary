@@ -5,7 +5,7 @@ import Foundation
 enum ClaudeInstructions {
     /// The short message the user sends with the file.
     static let chatMessage = """
-    Please label the scores in the attached Music Library export. Follow the "instructionsForClaude" in the file and reply with only the JSON.
+    Please label the scores in the attached Quire export. Follow the "instructionsForClaude" in the file and reply with only the JSON.
     """
 
     static let labelling = """
