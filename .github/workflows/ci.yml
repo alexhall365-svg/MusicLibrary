@@ -78,8 +78,25 @@ jobs:
             -scheme MusicLibrary \
             -destination "id=${{ steps.sim.outputs.udid }}" \
             -derivedDataPath build/test \
+            -resultBundlePath build/TestResults.xcresult \
             CODE_SIGNING_ALLOWED=NO \
             -quiet 2>&1 | tee xcodebuild-test.log
+
+      - name: Show test failures
+        if: failure()
+        run: |
+          if [ -d build/TestResults.xcresult ]; then
+            xcrun xcresulttool get test-results summary --path build/TestResults.xcresult --compact | python3 -c '
+          import json, sys
+          data = json.load(sys.stdin)
+          print("Result:", data.get("result"), "| passed:", data.get("passedTests"), "| failed:", data.get("failedTests"))
+          for failure in data.get("testFailures", []):
+              print("FAILED:", failure.get("testIdentifierString") or failure.get("testName"))
+              print("   ", failure.get("failureText"))
+          for issue in data.get("topInsights", []) or []:
+              print("INSIGHT:", issue.get("text"))
+          ' || xcrun xcresulttool get test-results summary --path build/TestResults.xcresult
+          fi
 
       - name: Build unsigned .ipa
         if: >-
