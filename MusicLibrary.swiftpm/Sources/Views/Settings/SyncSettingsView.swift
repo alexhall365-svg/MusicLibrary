@@ -7,6 +7,7 @@ struct SyncSettingsView: View {
     @Environment(AppState.self) private var appState
     @Environment(CloudSync.self) private var sync
     @State private var bytesUsed: Int64 = 0
+    @State private var counts: (here: Int, inICloud: Int) = (0, 0)
     @State private var showingCreate = false
     @State private var newChoirName = ""
     @State private var isWorking = false
@@ -59,6 +60,7 @@ struct SyncSettingsView: View {
                     }
 
                     if sync.isEnabled {
+                        detailsSection
                         hostedSection
                         if !sync.joinedChoirs.isEmpty { joinedSection }
                     }
@@ -71,7 +73,12 @@ struct SyncSettingsView: View {
                     Button("Done") { dismiss() }
                 }
             }
-            .task { bytesUsed = sync.iCloudBytesUsed() }
+            .task {
+                bytesUsed = sync.iCloudBytesUsed()
+                counts = sync.personalScoreCounts()
+            }
+            .onChange(of: sync.pendingChanges) { _, _ in counts = sync.personalScoreCounts() }
+            .onChange(of: sync.isFetching) { _, _ in counts = sync.personalScoreCounts() }
             .sheet(isPresented: $showingPaywall) { PaywallView() }
             .alert("New Choir Library", isPresented: $showingCreate) {
                 TextField("Choir name", text: $newChoirName)
@@ -134,7 +141,7 @@ struct SyncSettingsView: View {
             Spacer()
             if sync.isFetching || sync.isSending {
                 ProgressView()
-            } else if sync.pendingChanges == 0 && sync.accountStatus == .available {
+            } else if isUpToDate {
                 Image(systemName: "checkmark.icloud")
                     .foregroundStyle(.green)
             }
@@ -150,14 +157,33 @@ struct SyncSettingsView: View {
         case .temporarilyUnavailable: return "iCloud is temporarily unavailable"
         default: break
         }
-        if sync.isFetching { return "Checking for changes…" }
+        if sync.isFetching { return "Checking iCloud for changes…" }
+        if sync.problem != nil { return "Not syncing: see the message below" }
         if sync.pendingChanges > 0 {
             return "\(sync.pendingChanges) change\(sync.pendingChanges == 1 ? "" : "s") to upload"
+        }
+        if !sync.hasDownloadedOnce { return "Waiting for the first check with iCloud" }
+        if counts.inICloud < counts.here {
+            return "\(counts.here - counts.inICloud) scores not uploaded yet. Tap Sync Now"
         }
         if let last = sync.lastSync {
             return "Up to date · \(last.formatted(.relative(presentation: .named)))"
         }
         return "Waiting to sync"
+    }
+
+    private var isUpToDate: Bool {
+        sync.pendingChanges == 0 && sync.accountStatus == .available && sync.problem == nil
+            && sync.hasDownloadedOnce && counts.inICloud >= counts.here
+    }
+
+    private var detailsSection: some View {
+        Section("Sync Details") {
+            LabeledContent("Your scores on this device", value: "\(counts.here)")
+            LabeledContent("Of those, in iCloud", value: "\(counts.inICloud)")
+            LabeledContent("Waiting to upload", value: "\(sync.pendingChanges)")
+            NavigationLink("Sync Log") { SyncLogView() }
+        }
     }
 
     @ViewBuilder
@@ -265,5 +291,31 @@ struct SyncStatusIcon: View {
             }
         }
         .accessibilityLabel("iCloud and Choir")
+    }
+}
+
+/// Recent sync activity, to copy and send when something isn't syncing.
+struct SyncLogView: View {
+    @Environment(CloudSync.self) private var sync
+
+    var body: some View {
+        let text = sync.log.joined(separator: "\n")
+        ScrollView {
+            Text(text.isEmpty ? "Nothing logged yet." : text)
+                .font(.caption.monospaced())
+                .textSelection(.enabled)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding()
+        }
+        .navigationTitle("Sync Log")
+        .toolbar {
+            ToolbarItemGroup(placement: .primaryAction) {
+                Button("Copy", systemImage: "doc.on.doc") {
+                    UIPasteboard.general.string = "\(AppConfig.displayName) \(AppConfig.version) on \(UIDevice.current.model)\n" + text
+                }
+                ShareLink(item: text)
+                Button("Clear", systemImage: "trash", role: .destructive) { sync.clearLog() }
+            }
+        }
     }
 }
