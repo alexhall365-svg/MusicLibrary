@@ -40,6 +40,10 @@ targets:
         # the iCloud entitlements; other builds keep everything on the device.
         QuireCloudSync: $(CLOUD_SYNC)
         QuireCloudKitContainer: $(CLOUDKIT_CONTAINER_ID)
+        # iCloud IDs (comma-separated) that always have Pro: the app's owners.
+        QuireProOwners: $(PRO_OWNERS)
+        # YES: test purchases are blocked in TestFlight (testers can't get Pro free).
+        QuireBlockTestPurchases: $(BLOCK_TEST_PURCHASES)
         CKSharingSupported: true
         UIBackgroundModes:
           - remote-notification

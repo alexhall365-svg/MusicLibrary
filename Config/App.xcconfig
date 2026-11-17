@@ -14,6 +14,14 @@ APP_BUNDLE_ID = com.example.musiclibrary
 CLOUDKIT_CONTAINER_ID = iCloud.$(APP_BUNDLE_ID)
 CLOUD_SYNC = NO
 
+// iCloud IDs that always have Pro (the app's owners), comma-separated. Set by the
+// TestFlight workflow from the PRO_OWNERS repository variable.
+PRO_OWNERS =
+
+// YES blocks free test purchases in TestFlight. The TestFlight workflow sets it,
+// except for the App Store submission build (App Review must be able to buy).
+BLOCK_TEST_PURCHASES = NO
+
 MARKETING_VERSION = 0.1.0
 CURRENT_PROJECT_VERSION = 1
 

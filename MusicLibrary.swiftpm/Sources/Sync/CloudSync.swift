@@ -55,6 +55,8 @@ final class CloudSync {
     private(set) var scoresInICloud = 0
     /// PDFs received during the current check with iCloud.
     private(set) var pdfsReceived = 0
+    /// See `currentUserID()`.
+    private(set) var userID: String?
 
     /// Recent sync activity, newest last, for "Sync Log" in Settings.
     private(set) var log: [String] = []
@@ -377,6 +379,22 @@ final class CloudSync {
     }
 
     var hasDownloadedOnce: Bool { hasFetchedOnce(.private) }
+
+    /// This person's iCloud ID for the app (stable across their devices; the
+    /// same Apple Account always has the same ID). Remembered for offline use.
+    func currentUserID() async -> String? {
+        let key = "sync.userID"
+        if let container {
+            if let id = try? await container.userRecordID().recordName {
+                UserDefaults.standard.set(id, forKey: key)
+                if userID != id { userID = id }
+                return id
+            }
+        }
+        let cached = UserDefaults.standard.string(forKey: key)
+        if userID != cached { userID = cached }
+        return cached
+    }
 
     // MARK: - Permissions
 

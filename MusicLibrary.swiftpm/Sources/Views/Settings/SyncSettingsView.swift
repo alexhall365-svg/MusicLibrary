@@ -74,6 +74,7 @@ struct SyncSettingsView: View {
                 }
             }
             .task {
+                _ = await sync.currentUserID()
                 bytesUsed = sync.iCloudBytesUsed()
                 counts = sync.personalScoreCounts()
             }
@@ -186,6 +187,18 @@ struct SyncSettingsView: View {
             }
             LabeledContent("Waiting to upload", value: "\(sync.pendingChanges)")
             NavigationLink("Sync Log") { SyncLogView() }
+            if let id = sync.userID {
+                LabeledContent("Your iCloud ID") {
+                    Button {
+                        UIPasteboard.general.string = id
+                    } label: {
+                        Label(String(id.prefix(12)) + "…", systemImage: "doc.on.doc")
+                            .labelStyle(.titleAndIcon)
+                            .font(.caption.monospaced())
+                    }
+                    .accessibilityLabel("Copy your iCloud ID")
+                }
+            }
         }
     }
 
