@@ -77,11 +77,11 @@ enum ComposerNames {
 
     /// Surnames made of more than one word (they are never split).
     private static let multiWordSurnames: [[String]] = {
-        let names = known.map(\.surname).filter { $0.contains(" ") } + [
+        let names = ComposerNames.known.map(\.surname).filter { $0.contains(" ") } + [
             "Mendelssohn Bartholdy", "Saint Saens", "Coleridge Taylor", "Thalben Ball", "Ap Rhys",
         ]
         return names
-            .map { fold($0).split(separator: " ").map(String.init) }
+            .map { ComposerNames.fold($0).split(separator: " ").map(String.init) }
             .sorted { $0.count > $1.count }
     }()
 
@@ -108,7 +108,7 @@ enum ComposerNames {
     ]
 
     private static let knownBySurname: [String: [Known]] =
-        Dictionary(grouping: known, by: { fold($0.surname) })
+        Dictionary(grouping: ComposerNames.known, by: { ComposerNames.fold($0.surname) })
 
     // MARK: - API
 
@@ -121,6 +121,7 @@ enum ComposerNames {
         if text.contains("/") || text.contains("&") || fold(text).contains(" and ") { return text }
 
         var (surname, forenames) = split(text)
+        _ = forenames
         let surnameKey = aliases[fold(surname)] ?? fold(surname)
 
         if let candidates = knownBySurname[surnameKey], !candidates.isEmpty {
