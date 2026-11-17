@@ -12,7 +12,7 @@ struct GeneratedScoreDetails {
     @Guide(description: "The composer as 'Surname, Forenames', e.g. 'Stanford, Charles Villiers' or 'Bach, Johann Sebastian'. 'Anonymous' or 'Traditional' where that applies. Empty if unknown.")
     var composer: String
 
-    @Guide(description: "A standard catalogue number shown in the text or file name, e.g. 'BWV 147', 'K. 618', 'HWV 258', 'Op. 51 No. 1'. Empty if none is shown.")
+    @Guide(description: "The composer's catalogue number if one is shown, such as 'BWV 147', 'K. 618', 'HWV 258', 'RV 589' or 'Op. 51 No. 1'. Never an IMSLP, CPDL, publisher, plate or page number. Usually empty.")
     var catalogueNumber: String
 
     @Guide(description: "Voicing or instrumentation in short form, e.g. 'SATB', 'SATB + organ', 'SSA', 'Unison + organ', 'Organ', 'Piano'. Empty if unknown.")
@@ -21,11 +21,8 @@ struct GeneratedScoreDetails {
     @Guide(description: "The key, e.g. 'G major' or 'D minor'. Empty if not clear.")
     var key: String
 
-    @Guide(description: "One of: Anthem, Canticle, Motet, Mass, Psalm, Hymn, Responses, Carol, Introit, Song, Organ, Instrumental, Other.")
+    @Guide(description: "One of: Anthem, Canticle, Motet, Mass, Psalm, Hymn, Responses, Carol, Introit, Song, Organ, Instrumental, Other. Any Magnificat, Nunc dimittis, Te Deum or Jubilate is a Canticle.")
     var genre: String
-
-    @Guide(description: "Up to four short tags, such as the liturgical season or occasion (Advent, Christmas, Lent, Easter, Evensong, Communion, Wedding, Funeral) or the language (Latin). Empty list if none apply.")
-    var tags: [String]
 
     @Guide(description: "How sure you are about the title and composer, from 0.0 (a guess) to 1.0 (certain).")
     var confidence: Double
@@ -56,8 +53,7 @@ struct AppleIntelligenceSuggester: MetadataSuggester {
                 catalogueNumber: details.catalogueNumber,
                 scoring: details.scoring,
                 key: details.key,
-                genre: details.genre,
-                tags: Array(details.tags.prefix(4))
+                genre: details.genre
             )
             let concern = details.concern.trimmed
             return MetadataSuggestion(

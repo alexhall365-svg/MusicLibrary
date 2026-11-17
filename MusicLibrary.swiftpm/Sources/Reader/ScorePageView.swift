@@ -9,6 +9,13 @@ final class ScorePageView: UIView, PKCanvasViewDelegate {
         didSet { if alignment != oldValue { setNeedsLayout() } }
     }
     weak var annotationController: AnnotationController?
+    /// How far the reader is zoomed in; images are rendered sharper to match.
+    var zoomScale: CGFloat = 1 {
+        didSet {
+            guard abs(zoomScale - oldValue) > 0.01 else { return }
+            setNeedsLayout()
+        }
+    }
 
     private let imageView = UIImageView()
     private let canvasView = PKCanvasView()
@@ -103,7 +110,7 @@ final class ScorePageView: UIView, PKCanvasViewDelegate {
 
     private func loadImage(width: CGFloat) {
         guard let renderer, width > 0 else { return }
-        let pixelWidth = PageRenderer.bucket(width * traitCollection.displayScale)
+        let pixelWidth = PageRenderer.bucket(min(width * traitCollection.displayScale * max(zoomScale, 1), 3072))
         let page = pageIndex
         let key = "\(page)-\(pixelWidth)"
         guard key != requestedImageKey else { return }

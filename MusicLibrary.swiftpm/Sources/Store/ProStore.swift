@@ -4,9 +4,9 @@ import StoreKit
 
 /// The one-time "Pro" unlock (StoreKit 2, non-consumable).
 ///
-/// Debug builds (Swift Playgrounds, local development) always have Pro, so the
-/// developer can use everything. TestFlight and App Store builds use the real
-/// purchase; on TestFlight purchases are free test purchases.
+/// Debug builds (Swift Playgrounds, local development) and TestFlight builds made
+/// with "testers get Pro" (the TESTFLIGHT_PRO flag) always have Pro. App Store
+/// builds use the real one-time purchase.
 @MainActor
 @Observable
 final class ProStore {
@@ -21,7 +21,7 @@ final class ProStore {
     @ObservationIgnored private var updatesTask: Task<Void, Never>?
 
     init() {
-        #if DEBUG
+        #if DEBUG || TESTFLIGHT_PRO
         isPro = true
         #else
         isPro = UserDefaults.standard.bool(forKey: ProStore.cacheKey)
@@ -56,7 +56,7 @@ final class ProStore {
     }
 
     func refreshEntitlement() async {
-        #if !DEBUG
+        #if !DEBUG && !TESTFLIGHT_PRO
         var owned = false
         for await result in Transaction.currentEntitlements {
             if case .verified(let transaction) = result,

@@ -4,14 +4,14 @@ import XCTest
 final class FilenameMetadataSuggesterTests: XCTestCase {
     func testComposerTitleAndCatalogueInBrackets() {
         let metadata = FilenameMetadataSuggester.parse(fileName: "Bach – Jesu, meine Freude (BWV 227).pdf")
-        XCTAssertEqual(metadata.composer, "Bach")
+        XCTAssertEqual(metadata.composer, "Bach, Johann Sebastian")
         XCTAssertEqual(metadata.title, "Jesu, meine Freude")
         XCTAssertEqual(metadata.catalogueNumber, "BWV 227")
     }
 
     func testHyphenSeparatorAndKöchelWithoutSpace() {
         let metadata = FilenameMetadataSuggester.parse(fileName: "Mozart - Ave verum corpus K618.pdf")
-        XCTAssertEqual(metadata.composer, "Mozart")
+        XCTAssertEqual(metadata.composer, "Mozart, Wolfgang Amadeus")
         XCTAssertEqual(metadata.title, "Ave verum corpus")
         XCTAssertEqual(metadata.catalogueNumber, "K. 618")
     }
@@ -25,7 +25,7 @@ final class FilenameMetadataSuggesterTests: XCTestCase {
 
     func testOpusWithNumberIsNormalised() {
         let metadata = FilenameMetadataSuggester.parse(fileName: "Brahms - Warum ist das Licht gegeben op 74 no 1.pdf")
-        XCTAssertEqual(metadata.composer, "Brahms")
+        XCTAssertEqual(metadata.composer, "Brahms, Johannes")
         XCTAssertEqual(metadata.title, "Warum ist das Licht gegeben")
         XCTAssertEqual(metadata.catalogueNumber, "Op. 74 No. 1")
     }

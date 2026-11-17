@@ -20,7 +20,7 @@ enum AutoLabelLogic {
         var result = metadata
         result.title = clean(metadata.title)
         result.composer = clean(metadata.composer)
-        result.catalogueNumber = clean(metadata.catalogueNumber)
+        result.catalogueNumber = CatalogueNumbers.strict(clean(metadata.catalogueNumber))
         result.scoring = clean(metadata.scoring)
         result.key = clean(metadata.key)
         result.genre = clean(metadata.genre)

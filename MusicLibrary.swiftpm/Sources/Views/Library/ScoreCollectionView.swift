@@ -216,6 +216,8 @@ struct ScoreGridItem: View {
     let score: Score
 
     var body: some View {
+        // Every card has the same layout (two title lines, composer, catalogue
+        // line) so thumbnails line up whatever details a score has.
         VStack(alignment: .leading, spacing: 6) {
             Color.white
                 .aspectRatio(3.0 / 4.0, contentMode: .fit)
@@ -224,27 +226,31 @@ struct ScoreGridItem: View {
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                 .shadow(color: .black.opacity(0.18), radius: 4, y: 2)
+                .overlay(alignment: .topTrailing) {
+                    if score.labelStatus == .autoUncertain {
+                        Image(systemName: "exclamationmark.circle.fill")
+                            .font(.title3)
+                            .symbolRenderingMode(.palette)
+                            .foregroundStyle(.white, .orange)
+                            .padding(6)
+                            .accessibilityLabel("Check details")
+                    }
+                }
 
             Text(score.displayTitle)
                 .font(.subheadline.weight(.semibold))
-                .lineLimit(2)
+                .lineLimit(2, reservesSpace: true)
                 .multilineTextAlignment(.leading)
             Text(score.composer.isEmpty ? "Unknown composer" : score.composer)
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
-            if !score.catalogueNumber.isEmpty {
-                Text(score.catalogueNumber)
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-                    .lineLimit(1)
-            }
-            if score.labelStatus == .autoUncertain {
-                Label("Check details", systemImage: "exclamationmark.circle")
-                    .font(.caption2)
-                    .foregroundStyle(.orange)
-            }
+            Text(score.catalogueNumber.isEmpty ? " " : score.catalogueNumber)
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+                .lineLimit(1)
         }
+        .frame(maxHeight: .infinity, alignment: .top)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .accessibilityHint("Opens the score")

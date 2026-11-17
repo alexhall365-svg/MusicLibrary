@@ -77,6 +77,8 @@ A laptop is optional. It only makes Step 4 easier.
 2. Wait for the green tick: **about 15 minutes**. Then Apple processes the build for **another 5–30 minutes**. You get an email when it's ready.
 3. **If it turns red:** tell Claude "the TestFlight run failed". Claude can read the logs and fix it. First runs often need one small fix.
 
+> **Pro on TestFlight:** builds from the TestFlight workflow have Pro unlocked for you and all testers (the "testers get Pro" box, ticked by default). When you make the build you'll **submit to the App Store**, untick that box, so App Review sees the real £3.99 purchase.
+
 ## Step 7: Install it on your iPad and iPhone (internal testing, 5 min)
 1. Install **TestFlight** from the App Store, on both devices.
 2. In App Store Connect → your app → **TestFlight** → **Internal Testing** → **+**:
@@ -141,7 +143,7 @@ Do this once the choir has used the TestFlight version for a few weeks. The laun
    - On **TestFlight**, nobody needs a code: Pro "purchases" there are free test purchases.
 5. **Store listing:** in your app → **App Store** tab. Add screenshots for **iPhone (6.9-inch)** and **iPad (13-inch)**: run the **Screenshots** workflow on GitHub, or take them on your devices, the description and keywords (Claude will draft them), the privacy page, the age rating questionnaire (4+), and **App Privacy** ("Data Not Collected").
 6. **Countries:** under **Pricing and Availability**. Selling in the EU means declaring yourself a "trader", and your contact details are then shown publicly on EU store pages. If you'd rather not, leave EU countries unticked at first.
-7. Pick the build and tap **Add for Review** → **Submit**. **⏸** Usually 1–2 days.
+7. Make a build with **Actions → TestFlight → Run workflow** with **testers get Pro unticked**, pick that build and tap **Add for Review** → **Submit**. **⏸** Usually 1–2 days.
 
 ---
 

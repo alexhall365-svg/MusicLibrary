@@ -185,7 +185,11 @@ struct ExchangeMetadata: Codable, Equatable {
         var result = base
         if let title { result.title = title }
         if let composer { result.composer = composer }
-        if let catalogueNumber { result.catalogueNumber = catalogueNumber }
+        if let catalogueNumber {
+            // New values from outside must be real catalogue numbers (never IMSLP numbers).
+            result.catalogueNumber = catalogueNumber.trimmed == base.catalogueNumber
+                ? catalogueNumber : CatalogueNumbers.strict(catalogueNumber)
+        }
         if let scoring { result.scoring = scoring }
         if let key { result.key = key }
         if let genre { result.genre = genre }

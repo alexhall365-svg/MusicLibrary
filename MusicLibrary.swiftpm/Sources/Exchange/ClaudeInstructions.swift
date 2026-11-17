@@ -13,12 +13,12 @@ enum ClaudeInstructions {
 
     For every entry, fill in "metadata" as accurately as you can:
     - title: the piece's title as it is usually catalogued, e.g. "Hear my prayer" or "Magnificat and Nunc dimittis in G". Not the composer or publisher.
-    - composer: "Surname, Forenames", e.g. "Stanford, Charles Villiers" or "Bach, Johann Sebastian". Use "Anonymous" or "Traditional" where that applies. For an arrangement, put the original composer here and the arranger in notes.
-    - catalogueNumber: the standard catalogue number if there is one, e.g. "BWV 147", "K. 618", "HWV 258", "Op. 51 No. 1". Otherwise "".
+    - composer: "Surname, Forenames", e.g. "Stanford, Charles Villiers", "Bach, Johann Sebastian", "Vaughan Williams, Ralph" (some surnames have two words). Just the surname if the forenames aren't known. Use "Anonymous" or "Traditional" where that applies. For an arrangement, put the original composer here and the arranger in notes.
+    - catalogueNumber: only a composer's catalogue number, e.g. "BWV 147", "K. 618", "HWV 258", "RV 589", "BuxWV 78", "Op. 51 No. 1". Never an IMSLP or CPDL number, nor a publisher, plate or page number. Usually "".
     - scoring: voicing or instrumentation in short form, e.g. "SATB", "SATB + organ", "SSA", "SATB divisi", "Unison + organ", "Organ", "Piano".
     - key: e.g. "G major", "D minor", or "" if unknown.
-    - genre: one of Anthem, Canticle, Motet, Mass, Psalm, Hymn, Responses, Carol, Introit, Song, Organ, Instrumental, Other, or something more fitting.
-    - tags: a few useful tags, e.g. liturgical season or occasion ("Advent", "Christmas", "Lent", "Easter", "Evensong", "Communion", "Wedding", "Funeral"), language ("Latin"), and "Arrangement" where relevant.
+    - genre: one of Anthem, Canticle, Motet, Mass, Psalm, Hymn, Responses, Carol, Introit, Song, Organ, Instrumental, Other. Every Magnificat, Nunc dimittis, Te Deum and Jubilate is a Canticle.
+    - tags: leave out. The owner adds tags by hand.
     - notes: anything useful that fits nowhere else (arranger, editor, source of the text). Keep it short.
     - extra: keep any existing custom fields and fill them in if you can. Don't invent new ones.
 

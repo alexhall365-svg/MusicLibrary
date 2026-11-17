@@ -9,6 +9,9 @@ struct FilenameMetadataSuggester: MetadataSuggester {
 
     static func parse(fileName: String) -> ScoreMetadata {
         var name = (fileName as NSString).deletingPathExtension
+        // IMSLP downloads start with "IMSLP12345-PMLP67890-": not part of the name.
+        name = name.replacingOccurrences(
+            of: #"(?i)\b(IMSLP|PMLP)\d+[-_ ]*"#, with: "", options: .regularExpression)
         name = name.replacingOccurrences(of: "_", with: " ")
         name = collapseWhitespace(name)
 
@@ -37,10 +40,12 @@ struct FilenameMetadataSuggester: MetadataSuggester {
     private static let canonicalPrefixes: [String: String] = [
         "bwv": "BWV", "buxwv": "BuxWV", "hwv": "HWV", "rv": "RV", "swv": "SWV", "twv": "TWV",
         "woo": "WoO", "kv": "KV", "k": "K.", "op": "Op.", "hob": "Hob.", "d": "D.",
+        "z": "Z.", "wab": "WAB", "mwv": "MWV", "wwv": "WWV", "trv": "TrV", "fp": "FP",
+        "sz": "Sz.", "wq": "Wq.",
     ]
 
     private static let catalogueRegex: NSRegularExpression = {
-        let pattern = #"\b(BWV|BuxWV|HWV|RV|SWV|TWV|WoO|KV|Hob|Op|K|D)\.?\s*([IVXLC]+[a-z]?:\s*\d+[a-z]?|\d+[a-z]?(?:\s*(?:No|Nr)\.?\s*\d+[a-z]?)?)\b"#
+        let pattern = #"\b(BWV|BuxWV|HWV|RV|SWV|TWV|WoO|KV|WAB|MWV|WWV|TrV|Hob|Op|FP|Sz|Wq|K|D|Z)\.?\s*([IVXLC]+[a-z]?:\s*\d+[a-z]?|\d+[a-z]?(?:\s*(?:No|Nr)\.?\s*\d+[a-z]?)?)\b"#
         // swiftlint:disable:next force_try
         return try! NSRegularExpression(pattern: pattern, options: [.caseInsensitive])
     }()

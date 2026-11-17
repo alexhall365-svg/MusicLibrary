@@ -35,8 +35,9 @@ final class PDFImportTests: XCTestCase {
         XCTAssertEqual(report.imported.count, 1)
         let score = try XCTUnwrap(report.imported.first)
         XCTAssertEqual(score.pageCount, 3)
-        XCTAssertEqual(score.composer, "Purcell")
-        XCTAssertEqual(score.title, "Hear my prayer (Z 15)")
+        XCTAssertEqual(score.composer, "Purcell, Henry")
+        XCTAssertEqual(score.title, "Hear my prayer")
+        XCTAssertEqual(score.catalogueNumber, "Z. 15")
         XCTAssertEqual(score.contentHash.count, 64)
         XCTAssertTrue(FileManager.default.fileExists(
             atPath: paths.scoreFileURL(storedFileName: score.storedFileName).path))

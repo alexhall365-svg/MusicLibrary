@@ -43,7 +43,7 @@ enum FacetKind: String, CaseIterable, Identifiable, Hashable {
         switch self {
         case .composer: return "person.2"
         case .genre: return "square.grid.2x2"
-        case .scoring: return "person.3.sequence"
+        case .scoring: return "pianokeys"
         case .tag: return "tag"
         }
     }
@@ -133,9 +133,9 @@ enum LibraryFilter {
     static func values(of kind: FacetKind, for score: Score) -> [String] {
         let raw: [String]
         switch kind {
-        case .composer: raw = [score.composer]
-        case .genre: raw = [score.genre]
-        case .scoring: raw = [score.scoring]
+        case .composer: raw = [ComposerNames.normalized(score.composer)]
+        case .genre: raw = [GenreNames.normalized(score.genre, title: score.title)]
+        case .scoring: raw = [ScoringNames.normalized(score.scoring)]
         case .tag: raw = score.tags
         }
         return raw.map(\.trimmed).filter { !$0.isEmpty }

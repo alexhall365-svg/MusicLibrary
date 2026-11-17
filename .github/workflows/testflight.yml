@@ -10,6 +10,11 @@ name: TestFlight
 
 on:
   workflow_dispatch:
+    inputs:
+      testers_get_pro:
+        description: "Pro unlocked for TestFlight testers (untick for an App Store submission build)"
+        type: boolean
+        default: true
   schedule:
     - cron: "17 4 1 * *"
 
@@ -65,6 +70,14 @@ jobs:
           printf '%s\n' "$ASC_KEY_P8" > "$RUNNER_TEMP/keys/AuthKey_$ASC_KEY_ID.p8"
           echo "ASC_KEY_PATH=$RUNNER_TEMP/keys/AuthKey_$ASC_KEY_ID.p8" >> "$GITHUB_ENV"
           echo "BUILD_NUMBER=$(( ${{ github.run_number }} + 100 ))" >> "$GITHUB_ENV"
+          # Scheduled runs have no inputs: keep Pro on for testers.
+          if [ "${{ inputs.testers_get_pro }}" = "false" ]; then
+            echo "PRO_FLAG=" >> "$GITHUB_ENV"
+            echo "Building for App Store submission: Pro must be purchased."
+          else
+            echo "PRO_FLAG=TESTFLIGHT_PRO" >> "$GITHUB_ENV"
+            echo "Building for testers: Pro unlocked."
+          fi
 
       # Archive unsigned: an automatic-signing archive would need a development
       # profile, which requires registered devices. The export step below signs
@@ -82,6 +95,7 @@ jobs:
             APP_DISPLAY_NAME="$APP_DISPLAY_NAME" \
             DEVELOPMENT_TEAM="$TEAM_ID" \
             CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
+            SWIFT_ACTIVE_COMPILATION_CONDITIONS="$PRO_FLAG" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \

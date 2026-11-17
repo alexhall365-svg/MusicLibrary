@@ -19,15 +19,17 @@ struct ScoreMetadata: Equatable, Codable, Sendable {
         title.trimmed.isEmpty || composer.trimmed.isEmpty
     }
 
-    /// Trims whitespace, removes empty and duplicate tags, and drops empty custom fields.
+    /// Applies the library's standards: composer names as "Surname, Forenames",
+    /// tidy catalogue numbers (never IMSLP numbers), standard voicing and genres,
+    /// trimmed text, no duplicate tags and no empty custom fields.
     func normalized() -> ScoreMetadata {
         var copy = self
         copy.title = title.trimmed
-        copy.composer = composer.trimmed
-        copy.catalogueNumber = catalogueNumber.trimmed
-        copy.scoring = scoring.trimmed
+        copy.composer = ComposerNames.normalized(composer)
+        copy.catalogueNumber = CatalogueNumbers.tidy(catalogueNumber)
+        copy.scoring = ScoringNames.normalized(scoring)
         copy.key = key.trimmed
-        copy.genre = genre.trimmed
+        copy.genre = GenreNames.normalized(genre, title: title)
         copy.notes = notes.trimmed
         copy.tags = Self.normalizedTags(tags)
         var cleanExtra: [String: String] = [:]

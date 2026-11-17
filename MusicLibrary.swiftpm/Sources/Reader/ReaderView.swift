@@ -20,15 +20,11 @@ struct ReaderView: View {
                 pages: session.visiblePages,
                 annotating: session.isAnnotating,
                 controller: annotation,
-                toolKey: annotation.configurationKey
+                toolKey: annotation.configurationKey,
+                pageDescription: "Page \(session.pageLabel)",
+                onGesture: handle
             )
             .ignoresSafeArea()
-            .accessibilityElement(children: .contain)
-
-            if !session.isAnnotating {
-                TurnZones(session: session)
-                    .ignoresSafeArea()
-            }
 
             if session.chromeVisible && !session.isAnnotating {
                 ReaderChrome(session: session, onClose: close)
@@ -93,61 +89,29 @@ struct ReaderView: View {
         }
     }
 
-    private func close() {
-        session.saveProgress()
-        try? modelContext.save()
-        dismiss()
-    }
-}
-
-/// Invisible tap and swipe areas: left third back, right third forward, middle
-/// shows or hides the controls.
-private struct TurnZones: View {
-    let session: ReaderSession
-
-    var body: some View {
-        GeometryReader { proxy in
-            HStack(spacing: 0) {
-                zone(width: proxy.size.width * 0.3, label: "Previous page") {
-                    session.previousPage()
-                    hideChrome()
-                }
-                Color.clear
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        withAnimation(.easeInOut(duration: 0.2)) { session.chromeVisible.toggle() }
-                    }
-                    .accessibilityLabel(session.chromeVisible ? "Hide controls" : "Show controls")
-                    .accessibilityAddTraits(.isButton)
-                zone(width: proxy.size.width * 0.3, label: "Next page") {
-                    session.nextPage()
-                    hideChrome()
-                }
-            }
-            .simultaneousGesture(
-                DragGesture(minimumDistance: 30).onEnded { value in
-                    let horizontal = value.translation.width
-                    guard abs(horizontal) > abs(value.translation.height), abs(horizontal) > 50 else { return }
-                    if horizontal < 0 { session.nextPage() } else { session.previousPage() }
-                    hideChrome()
-                }
-            )
+    private func handle(_ gesture: ReaderGesture) {
+        switch gesture {
+        case .previous:
+            session.previousPage()
+            hideChrome()
+        case .next:
+            session.nextPage()
+            hideChrome()
+        case .toggleControls:
+            withAnimation(.easeInOut(duration: 0.2)) { session.chromeVisible.toggle() }
         }
-    }
-
-    private func zone(width: CGFloat, label: String, action: @escaping () -> Void) -> some View {
-        Color.clear
-            .frame(width: width)
-            .contentShape(Rectangle())
-            .onTapGesture(perform: action)
-            .accessibilityLabel(label)
-            .accessibilityAddTraits(.isButton)
     }
 
     private func hideChrome() {
         if session.chromeVisible {
             withAnimation(.easeInOut(duration: 0.2)) { session.chromeVisible = false }
         }
+    }
+
+    private func close() {
+        session.saveProgress()
+        try? modelContext.save()
+        dismiss()
     }
 }
 
@@ -160,6 +124,24 @@ private struct ReaderChrome: View {
     /// iPhone (and narrow iPad split view): fewer, smaller controls.
     private var isCompact: Bool { sizeClass == .compact }
 
+    @State private var showingGoTo = false
+    @State private var goToText = ""
+
+    /// The page number; tap it to jump to another page.
+    private var pageButton: some View {
+        Button {
+            goToText = ""
+            showingGoTo = true
+        } label: {
+            Text(session.pageLabel)
+                .font((isCompact ? Font.caption : Font.footnote).monospacedDigit())
+                .foregroundStyle(.secondary)
+                .fixedSize()
+        }
+        .accessibilityLabel("Page \(session.pageLabel)")
+        .accessibilityHint("Go to another page")
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             topBar
@@ -167,6 +149,18 @@ private struct ReaderChrome: View {
             if session.pageCount > 1 && !session.isPerformanceMode {
                 pageScrubber
             }
+        }
+        .alert("Go to Page", isPresented: $showingGoTo) {
+            TextField("1–\(session.pageCount)", text: $goToText)
+                .keyboardType(.numberPad)
+            Button("Go") {
+                if let number = Int(goToText.trimmed), number >= 1 {
+                    session.goToPage(number - 1)
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Enter a page number from 1 to \(session.pageCount).")
         }
     }
 
@@ -198,9 +192,7 @@ private struct ReaderChrome: View {
             }
 
             if !isCompact {
-                Text(session.pageLabel)
-                    .font(.footnote.monospacedDigit())
-                    .foregroundStyle(.secondary)
+                pageButton
             }
 
             if session.isPerformanceMode && !isCompact {
@@ -269,10 +261,7 @@ private struct ReaderChrome: View {
     private var pageScrubber: some View {
         HStack {
             if isCompact {
-                Text(session.pageLabel)
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(.secondary)
-                    .fixedSize()
+                pageButton
             } else {
                 Text("1").font(.caption2).foregroundStyle(.secondary)
             }

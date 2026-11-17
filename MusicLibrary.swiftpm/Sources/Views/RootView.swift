@@ -63,6 +63,7 @@ struct RootView: View {
             }
         }
         .task {
+            LibraryMaintenance.runIfNeeded(context: modelContext)
             DemoContent.prepareIfRequested(context: modelContext, appState: appState)
             if let item = DemoContent.requestedSidebarItem(context: modelContext) {
                 selection = item
