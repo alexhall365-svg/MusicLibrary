@@ -1,6 +1,11 @@
-# Plan: iCloud sync and choir sharing (later phase, not started)
+# Plan: iCloud sync and choir sharing
 
-Status: **planned, not built.** Agreed with the owner on 16 Nov 2026. Build after the developer account is active and TestFlight works.
+Status: **built (steps 1–5), awaiting TestFlight testing.** Agreed with the owner on 16 Nov 2026; built 17 Nov 2026. Setup steps: `docs/icloud-setup.md`. Guide for directors and singers: `docs/choir-guide.md`.
+
+Further decisions (17 Nov 2026):
+- A person **hosts one** Choir Library and can **join several**. Each choir is its own zone, so hosting several can be allowed later without changing the data.
+- Members can **copy a choir list into their own setlists** to reorder it; choir lists themselves are read-only for members.
+- The CloudKit schema is uploaded by a GitHub workflow (`CloudKit Schema`) and deployed to Production in the CloudKit Console, so no Mac is needed.
 
 ## Non-negotiable principle: local first
 - **Every device always keeps a full local copy** of every PDF it has (its own library and any choir music). Nothing is ever offloaded to the cloud.
@@ -24,10 +29,12 @@ Status: **planned, not built.** Agreed with the owner on 16 Nov 2026. Build afte
 ## Architecture
 - **CloudKit with `CKSyncEngine`** (iOS 17+): Apple's sync engine for a local-first app. It supports the private database (own devices) and shared databases (choir).
   - SwiftData's built-in CloudKit mirroring can't do sharing, so the app keeps SwiftData locally and uses CKSyncEngine to sync.
-- **Records:**
-  - `Score`: details, plus the PDF as a `CKAsset`. Only on first upload, or when the file changes, which is rare because PDFs are never modified.
-  - `Setlist` and `SetlistEntry`.
-  - `Annotation`: one record per page. **Private database only.**
+- **Records** (`CloudKit/schema.ckdb`):
+  - `Score`: details. `ScoreFile`: the PDF as a `CKAsset`, a separate record so editing details never re-sends or re-downloads the PDF.
+  - `Setlist`: name, notes and the ordered list of score IDs (one record, so a list and its order always arrive together).
+  - `AnnotationPage`: one record per page. **Private database only.**
+  - Reading position and "last opened" stay on each device.
+- **Change tracking:** the app compares the library with a ledger of what was last exchanged (`Sync/SyncLedger.swift`) after every save, and queues the differences. Changes received are written to the ledger first, so they never bounce back.
 - **Zones:**
   - `Personal` zone (private database): the user's own library.
   - `Choir` zone (owner's private database, shared with a `CKShare`): the Choir Library. Members see it in their shared database.
@@ -35,7 +42,8 @@ Status: **planned, not built.** Agreed with the owner on 16 Nov 2026. Build afte
 - **Downloads:** each choir member's app downloads every choir PDF in full and keeps it, so everything works offline at rehearsal.
 - **Members' own data:** annotations on choir scores are stored privately in the member's own `Personal` zone, linked by the score's ID. Members can also keep their own personal library alongside.
 - **Invites:** with Apple's share sheet (`UICloudSharingController`), using a link or Messages. Editors get read-write permission; members get read-only.
-- **Conflicts:** last writer wins for details. Setlist order uses positions. PDFs never conflict because they're immutable.
+- **Conflicts:** last writer wins for details and for a list's order. PDFs never conflict because they're immutable.
+- **First sync:** if the same PDF was imported on two devices before they first synced, the scores are matched by content hash and merged.
 - **Removal:** deleting a choir score deletes the shared record, and members' apps delete their local copy (their private annotations for it are deleted too).
 
 ## What this needs

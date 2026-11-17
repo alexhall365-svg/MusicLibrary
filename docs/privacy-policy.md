@@ -6,7 +6,11 @@ This app is designed to keep your music and information private.
 
 **What we collect:** Nothing. The app does not collect, store or send any personal data to the developer or to anyone else. There are no accounts, analytics, advertising or tracking.
 
-**Your files:** PDFs you import, their details, annotations and setlists are stored only on your device, in the app's private storage. They are included in your device's own iCloud or computer backups, which are controlled by you and Apple.
+**Your files:** PDFs you import, their details, annotations and setlists are stored on your device, in the app's private storage. They are included in your device's own iCloud or computer backups, which are controlled by you and Apple.
+
+**iCloud sync (optional, on by default):** to keep your own devices in step, your library is also copied to your private iCloud storage using Apple's CloudKit. It is stored in your iCloud account, under Apple's privacy policy; the developer cannot see it. You can turn this off in the app under iCloud & Choir.
+
+**Choir Library (optional):** if you create a Choir Library, the music and lists you put in it are shared, through iCloud, with the people you invite. If you join one, you receive the music the choir's owner shares. Your annotations are never shared with other members.
 
 **Apple Intelligence:** If you use automatic labelling, the text from your scores is processed by Apple's on-device model on your device. It is not sent to the developer.
 

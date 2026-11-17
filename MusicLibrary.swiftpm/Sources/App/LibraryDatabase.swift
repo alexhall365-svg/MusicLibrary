@@ -16,8 +16,8 @@ enum LibraryDatabase {
             }
             let paths = LibraryPaths.shared
             try paths.ensureDirectories()
-            // CloudKit stays off until there is a paid developer account. The models
-            // are already CloudKit-friendly (defaults everywhere, optional relationships).
+            // SwiftData's own CloudKit mirroring stays off: it can't share with a
+            // choir. `CloudSync` syncs this store with CKSyncEngine instead.
             let configuration = ModelConfiguration(
                 schema: schema,
                 url: paths.databaseURL,

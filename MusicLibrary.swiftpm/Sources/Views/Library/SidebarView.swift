@@ -13,21 +13,26 @@ struct SidebarView: View {
     @State private var renameText = ""
     @State private var setlistToDelete: Setlist?
     @State private var showingPaywall = false
+    @State private var showingSync = false
+    @State private var newListLibrary: String?
     @Environment(AppState.self) private var appState
+    @Environment(CloudSync.self) private var sync
+
+    private var personalSetlists: [Setlist] { setlists.filter { $0.cloudLibrary == nil } }
 
     var body: some View {
         List(selection: $selection) {
             Section("Library") {
                 NavigationLink(value: SidebarItem.allScores) {
                     Label("All Scores", systemImage: "music.note.list")
-                        .badge(scores.count)
+                        .badge(scores.filter(\.isPersonal).count)
                 }
                 NavigationLink(value: SidebarItem.recent) {
                     Label("Recently Opened", systemImage: "clock")
                 }
                 NavigationLink(value: SidebarItem.needsDetails) {
                     Label("Needs Details", systemImage: "questionmark.square.dashed")
-                        .badge(scores.filter(\.needsAttention).count)
+                        .badge(scores.filter { $0.needsAttention && sync.canEdit($0) }.count)
                 }
             }
 
@@ -39,8 +44,14 @@ struct SidebarView: View {
                 }
             }
 
+            if sync.isSupported && sync.isEnabled && !sync.choirs.isEmpty {
+                ForEach(sync.choirs) { choir in
+                    choirSection(choir)
+                }
+            }
+
             Section("Setlists") {
-                ForEach(setlists) { setlist in
+                ForEach(personalSetlists) { setlist in
                     NavigationLink(value: SidebarItem.setlist(setlist.id)) {
                         Label(setlist.name, systemImage: "list.number")
                             .badge(setlist.entries?.count ?? 0)
@@ -64,6 +75,15 @@ struct SidebarView: View {
             }
 
             Section("Tools") {
+                Button {
+                    showingSync = true
+                } label: {
+                    Label {
+                        Text("iCloud & Choir")
+                    } icon: {
+                        SyncStatusIcon()
+                    }
+                }
                 NavigationLink(value: SidebarItem.labelling) {
                     Label("Auto-Label", systemImage: "sparkles")
                 }
@@ -80,6 +100,23 @@ struct SidebarView: View {
         }
         .navigationTitle(AppConfig.displayName)
         .sheet(isPresented: $showingPaywall) { PaywallView() }
+        .sheet(isPresented: $showingSync) { SyncSettingsView() }
+        .refreshable { await sync.syncNow() }
+        .alert("New Choir List", isPresented: Binding(
+            get: { newListLibrary != nil }, set: { if !$0 { newListLibrary = nil } })
+        ) {
+            TextField("Name", text: $newSetlistName)
+            Button("Create") {
+                if let library = newListLibrary {
+                    let setlist = LibraryActions.createSetlist(named: newSetlistName, in: library, context: modelContext)
+                    selection = .setlist(setlist.id)
+                }
+                newListLibrary = nil
+            }
+            Button("Cancel", role: .cancel) { newListLibrary = nil }
+        } message: {
+            Text("For example \"Evensong – Advent Sunday\" or \"Christmas season 2026\". Everyone in the choir gets it.")
+        }
         .alert("New Setlist", isPresented: $showingNewSetlist) {
             TextField("Name", text: $newSetlistName)
             Button("Create") {
@@ -118,7 +155,57 @@ struct SidebarView: View {
                 setlistToDelete = nil
             }
         } message: {
-            Text("The scores stay in your library.")
+            if setlistToDelete?.cloudLibrary != nil {
+                Text("The list is removed for everyone in the choir. The music stays in the Choir Library.")
+            } else {
+                Text("The scores stay in your library.")
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func choirSection(_ choir: ChoirInfo) -> some View {
+        let canEdit = sync.canEdit(choir.id)
+        Section {
+            NavigationLink(value: SidebarItem.choir(choir.id)) {
+                Label("Choir Music", systemImage: "person.3")
+                    .badge(scores.filter { $0.cloudLibrary == choir.id }.count)
+            }
+            ForEach(setlists.filter { $0.cloudLibrary == choir.id }) { setlist in
+                NavigationLink(value: SidebarItem.setlist(setlist.id)) {
+                    Label(setlist.name, systemImage: "music.note.list")
+                        .badge(setlist.entries?.count ?? 0)
+                }
+                .contextMenu {
+                    Button("Copy to My Setlists", systemImage: "doc.on.doc") {
+                        let copy = LibraryActions.copyToMySetlists(setlist, context: modelContext)
+                        selection = .setlist(copy.id)
+                    }
+                    if canEdit {
+                        Button("Rename…", systemImage: "pencil") {
+                            renameText = setlist.name
+                            setlistToRename = setlist
+                        }
+                        Button("Delete", systemImage: "trash", role: .destructive) {
+                            setlistToDelete = setlist
+                        }
+                    }
+                }
+            }
+            if canEdit {
+                Button {
+                    newSetlistName = ""
+                    newListLibrary = choir.id
+                } label: {
+                    Label("New Choir List", systemImage: "plus")
+                }
+            }
+        } header: {
+            Text(choir.name)
+        } footer: {
+            if !canEdit {
+                Text("Shared with you\(choir.ownerName.map { " by \($0)" } ?? ""). View only.")
+            }
         }
     }
 }

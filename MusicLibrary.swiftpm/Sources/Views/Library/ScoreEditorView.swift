@@ -78,8 +78,16 @@ struct ScoreEditorView: View {
                 MetadataFormFields(metadata: $metadata)
                     .id(metadataVersion)
 
-                Section {
-                    Button("Delete Score", role: .destructive) { confirmDelete = true }
+                if score.isPersonal {
+                    Section {
+                        Button("Delete Score", role: .destructive) { confirmDelete = true }
+                    }
+                } else if let choir = CloudSync.shared.choir(score.cloudLibrary) {
+                    Section {
+                        Label("In \(choir.name). Changes to these details reach everyone in the choir.", systemImage: "person.3")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
             .navigationTitle("Score Details")

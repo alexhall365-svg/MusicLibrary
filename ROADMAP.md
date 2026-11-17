@@ -20,11 +20,13 @@
 - [x] Demo library and Screenshots workflow for App Store images
 - [ ] App Store listing, screenshots, rating prompt
 
-## Planned: iCloud sync and choir sharing (see docs/icloud-and-choir-plan.md)
-- [ ] Local-first iCloud sync across your own devices (CloudKit / CKSyncEngine); full local copies always, works offline
-- [ ] Shared Choir Library with lists (e.g. "Christmas season 2026"), editors, read-only members, removals propagate
-- [ ] Annotations private per person (synced across own devices); live shared annotations later
-- [ ] Pricing: own sync free; hosting a Choir Library is Pro; receiving is free
+## Built, in TestFlight testing: iCloud sync and choir sharing (see docs/icloud-and-choir-plan.md, docs/icloud-setup.md)
+- [x] Local-first iCloud sync across your own devices (CloudKit / CKSyncEngine); full local copies always, works offline
+- [x] Shared Choir Library with lists (e.g. "Christmas season 2026"), editors, read-only members, removals propagate
+- [x] Annotations private per person (synced across own devices)
+- [x] Pricing: own sync free; hosting a Choir Library is Pro; receiving is free
+- [ ] One-off iCloud setup (docs/icloud-setup.md) and testing on two Apple Accounts
+- [ ] Later: live shared annotations (a "director's markings" layer); hosting more than one choir
 
 ## Phase 2
 - [ ] **Share library with friends:** export a "share package" (selected scores or a setlist, PDFs + metadata.json, optionally annotations) that a friend imports with the existing folder/package import. Later, a live shared library via iCloud (needs a paid account).
@@ -40,6 +42,5 @@
 - [ ] Metronome and pitch pipe
 - [ ] Optional Anthropic API key (stored in the Keychain) as another `MetadataSuggester`, for in-app Claude labelling
 - [ ] Finding public-domain scores (IMSLP, CPDL), reusing the import package and respecting each site's terms
-- [ ] iCloud sync between iPad and iPhone (paid developer account; the models are already CloudKit-compatible)
 - [ ] Automatic Google Drive backup
 - [ ] App Store readiness: rename, final bundle ID, privacy manifest, licence review

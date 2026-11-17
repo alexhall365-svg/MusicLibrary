@@ -74,7 +74,7 @@ final class AutoLabeler {
         while !queue.isEmpty && !cancelRequested {
             let id = queue.removeFirst()
             defer { done += 1 }
-            guard let score = fetchScore(id, context: context) else { continue }
+            guard let score = fetchScore(id, context: context), CloudSync.shared.canEdit(score) else { continue }
 
             if score.extractedText == nil {
                 let text = await TextExtractor.extractText(from: score.fileURL)

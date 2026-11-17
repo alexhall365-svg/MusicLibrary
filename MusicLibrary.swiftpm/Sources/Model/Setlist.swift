@@ -7,13 +7,17 @@ final class Setlist {
     var name: String = ""
     var notes: String = ""
     var createdAt: Date = Date()
+    /// nil for your own setlists, or the Choir Library this list belongs to
+    /// (see `CloudLibrary`). Choir lists sync to every member of the choir.
+    var cloudLibrary: String?
 
     @Relationship(deleteRule: .cascade, inverse: \SetlistEntry.setlist)
     var entries: [SetlistEntry]? = []
 
-    init(name: String) {
+    init(name: String, cloudLibrary: String? = nil) {
         self.id = UUID()
         self.name = name
+        self.cloudLibrary = cloudLibrary
         self.createdAt = Date()
     }
 

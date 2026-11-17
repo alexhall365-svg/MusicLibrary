@@ -9,6 +9,11 @@ APP_DISPLAY_NAME = Quire
 // personal (e.g. your initials) if Xcode says the ID is unavailable.
 APP_BUNDLE_ID = com.example.musiclibrary
 
+// iCloud (CloudKit) container. The TestFlight workflow sets CLOUD_SYNC = YES and
+// signs the app with the iCloud entitlements. Leave NO for local and CI builds.
+CLOUDKIT_CONTAINER_ID = iCloud.$(APP_BUNDLE_ID)
+CLOUD_SYNC = NO
+
 MARKETING_VERSION = 0.1.0
 CURRENT_PROJECT_VERSION = 1
 

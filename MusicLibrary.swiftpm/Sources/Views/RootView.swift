@@ -7,6 +7,8 @@ enum SidebarItem: Hashable {
     case needsDetails
     case browse(FacetKind)
     case setlist(UUID)
+    /// A Choir Library's music (its library key, see `CloudLibrary`).
+    case choir(String)
     case labelling
     case duplicates
 }
@@ -92,6 +94,8 @@ struct RootView: View {
             BrowseView(kind: kind)
         case .setlist(let id):
             SetlistDetailView(setlistID: id)
+        case .choir(let library):
+            ScoreCollectionView(scope: .library(library))
         case .labelling:
             ClaudeLabellingView()
         case .duplicates:
