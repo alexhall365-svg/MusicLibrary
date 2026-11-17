@@ -5,6 +5,8 @@ import UniformTypeIdentifiers
 enum LibraryScope: Hashable {
     case all, recent, needsDetails
     case facet(Facet)
+    /// A Choir Library's music.
+    case library(String)
 
     var title: String {
         switch self {
@@ -12,6 +14,7 @@ enum LibraryScope: Hashable {
         case .recent: return "Recently Opened"
         case .needsDetails: return "Needs Details"
         case .facet(let facet): return facet.value
+        case .library: return "Choir Music"
         }
     }
 }
@@ -30,6 +33,8 @@ struct ScoreCollectionView: View {
     @State private var searchText = ""
     @State private var isDropTargeted = false
     @State private var showingPaywall = false
+    @State private var scoreToRemoveFromChoir: Score?
+    @Environment(CloudSync.self) private var sync
     /// Scores waiting for the user to confirm deletion.
     @State private var pendingDeletion: [Score] = []
     @State private var isSelecting = false
@@ -43,10 +48,11 @@ struct ScoreCollectionView: View {
         var base = allScores
         var facet: Facet?
         switch scope {
-        case .all: break
+        case .all: base = base.filter(\.isPersonal)
         case .recent: base = base.filter { $0.lastOpened != nil }
-        case .needsDetails: base = base.filter(\.needsAttention)
+        case .needsDetails: base = base.filter { $0.needsAttention && sync.canEdit($0) }
         case .facet(let value): facet = value
+        case .library(let key): base = base.filter { $0.cloudLibrary == key }
         }
         return LibraryFilter.apply(base, search: searchText, facet: facet, sort: sort)
     }
@@ -54,7 +60,9 @@ struct ScoreCollectionView: View {
     var body: some View {
         let visible = scores
         Group {
-            if allScores.isEmpty {
+            if case .library = scope, visible.isEmpty, searchText.isEmpty {
+                emptyChoir
+            } else if allScores.isEmpty {
                 emptyLibrary
             } else if visible.isEmpty {
                 if searchText.isEmpty {
@@ -68,7 +76,7 @@ struct ScoreCollectionView: View {
                 grid(visible)
             }
         }
-        .navigationTitle(isSelecting ? selectionTitle : scope.title)
+        .navigationTitle(isSelecting ? selectionTitle : title)
         .navigationBarTitleDisplayMode(isSelecting ? .inline : .automatic)
         .searchable(text: $searchText, prompt: "Title, composer, catalogue…")
         .toolbar {
@@ -87,11 +95,11 @@ struct ScoreCollectionView: View {
                         .disabled(selection.isEmpty)
                     Spacer()
                     Button(role: .destructive) {
-                        pendingDeletion = selectedScores(in: visible)
+                        pendingDeletion = selectedScores(in: visible).filter(\.isPersonal)
                     } label: {
                         Label("Delete", systemImage: "trash")
                     }
-                    .disabled(selection.isEmpty)
+                    .disabled(!selectedScores(in: visible).contains(where: \.isPersonal))
                 }
             } else {
                 ToolbarItemGroup(placement: .primaryAction) {
@@ -110,7 +118,7 @@ struct ScoreCollectionView: View {
                             Label("Select", systemImage: "checkmark.circle")
                         }
                     }
-                    ImportMenu()
+                    if canImportHere { ImportMenu() }
                 }
             }
         }
@@ -133,6 +141,26 @@ struct ScoreCollectionView: View {
             if isSelecting && selection.isEmpty { endSelecting() }
         }
         .onChange(of: scope) { _, _ in endSelecting() }
+        .confirmationDialog(
+            "Remove \"\(scoreToRemoveFromChoir?.displayTitle ?? "")\" from the choir?",
+            isPresented: Binding(get: { scoreToRemoveFromChoir != nil }, set: { if !$0 { scoreToRemoveFromChoir = nil } }),
+            titleVisibility: .visible
+        ) {
+            if let score = scoreToRemoveFromChoir, CloudLibrary.isHosted(score.cloudLibrary) {
+                Button("Remove, Keep in My Library") {
+                    LibraryActions.removeFromChoir(score, keepCopy: true, context: modelContext)
+                    scoreToRemoveFromChoir = nil
+                }
+            }
+            Button("Remove from Choir", role: .destructive) {
+                if let score = scoreToRemoveFromChoir {
+                    LibraryActions.removeFromChoir(score, keepCopy: false, context: modelContext)
+                }
+                scoreToRemoveFromChoir = nil
+            }
+        } message: {
+            Text("It's removed from every member's devices, with their annotations on it.")
+        }
         .task {
             if UserDefaults.standard.bool(forKey: "demoLibrary") {
                 let demo = UserDefaults.standard.string(forKey: "demoScreen")
@@ -178,8 +206,14 @@ struct ScoreCollectionView: View {
 
     private func addToSetlistMenu(for scores: [Score]) -> some View {
         Menu {
-            ForEach(setlists) { setlist in
+            ForEach(setlists.filter { $0.cloudLibrary == nil }) { setlist in
                 Button(setlist.name) {
+                    LibraryActions.add(scores, to: setlist, context: modelContext)
+                    if isSelecting { endSelecting() }
+                }
+            }
+            ForEach(choirLists(for: scores)) { setlist in
+                Button("\(setlist.name) (\(sync.choir(setlist.cloudLibrary)?.name ?? "Choir"))") {
                     LibraryActions.add(scores, to: setlist, context: modelContext)
                     if isSelecting { endSelecting() }
                 }
@@ -193,6 +227,29 @@ struct ScoreCollectionView: View {
         } label: {
             Label("Add to Setlist", systemImage: "text.badge.plus")
         }
+    }
+
+    /// Imports always go into your own library, so Import isn't offered in a choir.
+    private var canImportHere: Bool {
+        if case .library = scope { return false }
+        return true
+    }
+
+    private var emptyChoir: some View {
+        ContentUnavailableView {
+            Label("No choir music yet", systemImage: "person.3")
+        } description: {
+            if case .library(let key) = scope, sync.canEdit(key) {
+                Text("Add scores from your library with \"Add to Choir Library\" (touch and hold a score), or add them to a choir list.")
+            } else {
+                Text("Music the choir shares appears here and stays on this device for rehearsal.")
+            }
+        }
+    }
+
+    private var title: String {
+        if case .library(let key) = scope, let choir = sync.choir(key) { return choir.name }
+        return scope.title
     }
 
     private var coordinator: ImportCoordinator {
@@ -266,8 +323,10 @@ struct ScoreCollectionView: View {
             .accessibilityAddTraits(isSelecting && selection.contains(score.id) ? .isSelected : [])
             .contextMenu { if !isSelecting { menu(for: score) } }
             .swipeActions {
-                if !isSelecting {
-                    Button("Delete", systemImage: "trash", role: .destructive) { pendingDeletion = [score] }
+                if !isSelecting && sync.canEdit(score) {
+                    if score.isPersonal {
+                        Button("Delete", systemImage: "trash", role: .destructive) { pendingDeletion = [score] }
+                    }
                     Button("Details", systemImage: "info.circle") { appState.editingScore = score }
                 }
             }
@@ -277,9 +336,12 @@ struct ScoreCollectionView: View {
 
     @ViewBuilder
     private func menu(for score: Score) -> some View {
+        let canEdit = sync.canEdit(score)
         Button("Open", systemImage: "book") { open(score) }
-        Button("Edit Details", systemImage: "info.circle") { appState.editingScore = score }
-        if AppleIntelligence.status.isAvailable {
+        if canEdit {
+            Button("Edit Details", systemImage: "info.circle") { appState.editingScore = score }
+        }
+        if canEdit && AppleIntelligence.status.isAvailable {
             Button("Relabel with Apple Intelligence", systemImage: "sparkles") {
                 if appState.pro.isPro {
                     appState.autoLabeler.start([score.id], mode: .review, context: modelContext, appState: appState)
@@ -294,8 +356,28 @@ struct ScoreCollectionView: View {
             isSelecting = true
             selection = [score.id]
         }
-        Divider()
-        Button("Delete", systemImage: "trash", role: .destructive) { pendingDeletion = [score] }
+        if score.isPersonal {
+            ForEach(sync.editableChoirs) { choir in
+                Button("Add to \(choir.name)", systemImage: "person.3") {
+                    LibraryActions.moveToChoir([score], library: choir.id, context: modelContext)
+                }
+            }
+        } else if canEdit {
+            Button("Remove from Choir…", systemImage: "person.badge.minus") { scoreToRemoveFromChoir = score }
+        }
+        if canEdit && score.isPersonal {
+            Divider()
+            Button("Delete", systemImage: "trash", role: .destructive) { pendingDeletion = [score] }
+        }
+    }
+
+    /// Choir lists these scores can go in: lists in their own choir, or (for
+    /// your own scores) lists in a choir you can edit, which moves them into it.
+    private func choirLists(for scores: [Score]) -> [Setlist] {
+        setlists.filter { list in
+            guard let library = list.cloudLibrary, sync.canEdit(library) else { return false }
+            return scores.allSatisfy { $0.isPersonal || $0.cloudLibrary == library }
+        }
     }
 
     private func open(_ score: Score) {

@@ -1,0 +1,90 @@
+name: CloudKit Schema
+
+# Uploads CloudKit/schema.ckdb (the record types iCloud sync uses) to the
+# Development environment of the app's iCloud container. Afterwards, open the
+# CloudKit Console in Safari and choose "Deploy Schema Changes…" so TestFlight
+# builds (which use Production) can sync. See docs/icloud-setup.md.
+#
+# One-off setup:
+#   Repository variables: APP_BUNDLE_ID, APPLE_TEAM_ID (optional: CLOUDKIT_CONTAINER)
+#   Repository secret:    CLOUDKIT_MANAGEMENT_TOKEN (CloudKit Console → Settings → Tokens)
+
+on:
+  workflow_dispatch:
+    inputs:
+      import:
+        description: "Import into Development (untick to only check the schema)"
+        type: boolean
+        default: true
+
+jobs:
+  schema:
+    runs-on: macos-15
+    timeout-minutes: 15
+    env:
+      TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+      CONTAINER: ${{ vars.CLOUDKIT_CONTAINER || format('iCloud.{0}', vars.APP_BUNDLE_ID) }}
+      CLOUDKIT_MANAGEMENT_TOKEN: ${{ secrets.CLOUDKIT_MANAGEMENT_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check setup
+        run: |
+          missing=""
+          [ -n "$TEAM_ID" ] || missing="$missing APPLE_TEAM_ID(variable)"
+          [ "$CONTAINER" != "iCloud." ] || missing="$missing APP_BUNDLE_ID(variable)"
+          [ -n "$CLOUDKIT_MANAGEMENT_TOKEN" ] || missing="$missing CLOUDKIT_MANAGEMENT_TOKEN(secret)"
+          if [ -n "$missing" ]; then
+            echo "::error::Not set up yet. Missing:$missing. Follow docs/icloud-setup.md."
+            exit 1
+          fi
+          echo "Container: $CONTAINER"
+
+      - name: Select newest Xcode
+        run: |
+          XCODE=$(ls -d /Applications/Xcode_*.app | grep -vi beta | sort -V | tail -1)
+          sudo xcode-select -s "$XCODE"
+          xcrun cktool version || true
+
+      # The schema also asks for the system "cloudkit.share" type, which sharing a
+      # Choir Library needs in Production. If CloudKit won't accept it from a file,
+      # the rest is still imported and a warning explains the fallback.
+      - name: Prepare schema
+        run: |
+          python3 - <<'PY'
+          src = open("CloudKit/schema.ckdb").read()
+          share = '''
+              RECORD TYPE "cloudkit.share" (
+                  "___createTime" TIMESTAMP,
+                  "___createdBy"  REFERENCE,
+                  "___etag"       STRING,
+                  "___modTime"    TIMESTAMP,
+                  "___modifiedBy" REFERENCE,
+                  "___recordID"   REFERENCE,
+                  GRANT WRITE TO "_creator",
+                  GRANT CREATE TO "_icloud",
+                  GRANT READ TO "_world"
+              );
+          '''
+          open("with-share.ckdb", "w").write(src.rstrip() + "\n" + share)
+          PY
+
+      - name: Validate schema
+        id: validate
+        run: |
+          if xcrun cktool validate-schema --team-id "$TEAM_ID" --container-id "$CONTAINER" \
+               --environment development --file with-share.ckdb; then
+            echo "file=with-share.ckdb" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::CloudKit didn't accept the cloudkit.share type from a file. Importing the app's own types only; see 'Sharing says cannot create type cloudkit.share' in docs/icloud-setup.md."
+            xcrun cktool validate-schema --team-id "$TEAM_ID" --container-id "$CONTAINER" \
+              --environment development --file CloudKit/schema.ckdb
+            echo "file=CloudKit/schema.ckdb" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Import into Development
+        if: ${{ inputs.import }}
+        run: |
+          xcrun cktool import-schema --team-id "$TEAM_ID" --container-id "$CONTAINER" \
+            --environment development --file "${{ steps.validate.outputs.file }}"
+          echo "Imported. Now open https://icloud.developer.apple.com, pick $CONTAINER, and choose Deploy Schema Changes… to copy it to Production."

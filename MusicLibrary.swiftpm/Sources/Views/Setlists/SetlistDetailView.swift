@@ -21,10 +21,12 @@ private struct SetlistContentView: View {
     @Bindable var setlist: Setlist
     @Environment(AppState.self) private var appState
     @Environment(\.modelContext) private var modelContext
+    @Environment(CloudSync.self) private var sync
     @State private var showingAddScores = false
 
     var body: some View {
         let entries = setlist.orderedEntries
+        let canEdit = sync.canEdit(setlist)
         List {
             ForEach(Array(entries.enumerated()), id: \.element.id) { index, entry in
                 Button {
@@ -42,18 +44,22 @@ private struct SetlistContentView: View {
                 }
                 .buttonStyle(.plain)
             }
-            .onMove(perform: move)
-            .onDelete(perform: delete)
+            .onMove(perform: canEdit ? move : nil)
+            .onDelete(perform: canEdit ? delete : nil)
         }
         .overlay {
             if entries.isEmpty {
                 ContentUnavailableView {
                     Label("Empty setlist", systemImage: "list.number")
                 } description: {
-                    Text("Add the scores you'll need, in performance order.")
+                    Text(canEdit
+                         ? "Add the scores you'll need, in performance order."
+                         : "The choir hasn't added any music to this list yet.")
                 } actions: {
-                    Button("Add Scores") { showingAddScores = true }
-                        .buttonStyle(.borderedProminent)
+                    if canEdit {
+                        Button("Add Scores") { showingAddScores = true }
+                            .buttonStyle(.borderedProminent)
+                    }
                 }
             }
         }
@@ -62,8 +68,32 @@ private struct SetlistContentView: View {
             ToolbarItemGroup(placement: .primaryAction) {
                 Button("Play", systemImage: "play.fill") { play(from: 0) }
                     .disabled(entries.isEmpty)
-                Button("Add Scores", systemImage: "plus") { showingAddScores = true }
-                EditButton()
+                if canEdit {
+                    Button("Add Scores", systemImage: "plus") { showingAddScores = true }
+                    EditButton()
+                }
+                if setlist.cloudLibrary != nil {
+                    Button("Copy to My Setlists", systemImage: "doc.on.doc") {
+                        LibraryActions.copyToMySetlists(setlist, context: modelContext)
+                        appState.alert = AppAlert(
+                            title: "Copied",
+                            message: "\"\(setlist.name)\" is now also in your Setlists, where you can reorder and change it.")
+                    }
+                }
+            }
+        }
+        .safeAreaInset(edge: .top) {
+            if let choir = sync.choir(setlist.cloudLibrary) {
+                Label(canEdit
+                      ? "Choir list in \(choir.name). Changes reach everyone in the choir."
+                      : "Choir list from \(choir.name). View only.",
+                      systemImage: "person.3")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal)
+                    .padding(.vertical, 6)
+                    .background(.bar)
             }
         }
         .sheet(isPresented: $showingAddScores) {
@@ -105,8 +135,14 @@ struct AddScoresSheet: View {
     @State private var selected: [UUID] = []
     @State private var searchText = ""
 
+    /// A choir list can take that choir's music, or your own (which then joins the choir).
+    private var candidates: [Score] {
+        guard let library = setlist.cloudLibrary else { return scores }
+        return scores.filter { $0.isPersonal || $0.cloudLibrary == library }
+    }
+
     var body: some View {
-        let visible = LibraryFilter.apply(scores, search: searchText, facet: nil, sort: .title)
+        let visible = LibraryFilter.apply(candidates, search: searchText, facet: nil, sort: .title)
         NavigationStack {
             List(visible) { score in
                 Button {
@@ -137,6 +173,16 @@ struct AddScoresSheet: View {
             }
             .listStyle(.plain)
             .searchable(text: $searchText, prompt: "Search scores")
+            .safeAreaInset(edge: .bottom) {
+                if setlist.cloudLibrary != nil {
+                    Text("Your own scores you add here move into the Choir Library, so every member gets them.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(.bar)
+                }
+            }
             .navigationTitle("Add to \(setlist.name)")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

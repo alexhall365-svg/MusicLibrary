@@ -98,7 +98,7 @@ struct MetadataReviewView: View {
         let scores = (try? modelContext.fetch(FetchDescriptor<Score>())) ?? []
         let byID = Dictionary(scores.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         for item in review.items where item.include {
-            if let score = byID[item.scoreID] {
+            if let score = byID[item.scoreID], CloudSync.shared.canEdit(score) {
                 score.metadata = item.after
                 score.labelStatus = nil
             }

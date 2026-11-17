@@ -42,6 +42,10 @@ final class Score {
     /// A tiny image of the first page, for spotting duplicates.
     var pageFingerprint: Data?
 
+    /// Which library the score belongs to: nil for your own library, or a Choir
+    /// Library key (see `CloudLibrary`). Choir scores are shared with the choir.
+    var cloudLibrary: String?
+
     @Relationship(deleteRule: .cascade, inverse: \SetlistEntry.score)
     var setlistEntries: [SetlistEntry]? = []
 
@@ -123,6 +127,8 @@ extension Score {
         get { labelStatusRaw.flatMap(LabelStatus.init(rawValue:)) }
         set { labelStatusRaw = newValue?.rawValue }
     }
+
+    var isPersonal: Bool { cloudLibrary == nil }
 
     /// Missing details, or filled automatically with low confidence.
     var needsAttention: Bool { needsLabels || labelStatus == .autoUncertain }

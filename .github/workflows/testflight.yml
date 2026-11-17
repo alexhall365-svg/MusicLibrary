@@ -5,8 +5,10 @@ name: TestFlight
 # It also runs monthly so TestFlight builds never reach their 90-day expiry.
 #
 # One-off setup (see docs/app-store-setup.md):
-#   Repository variables: APP_BUNDLE_ID, APPLE_TEAM_ID (optional: APP_DISPLAY_NAME)
+#   Repository variables: APP_BUNDLE_ID, APPLE_TEAM_ID (optional: APP_DISPLAY_NAME,
+#                         CLOUDKIT_CONTAINER, ICLOUD_SYNC=off to build without iCloud)
 #   Repository secrets:   ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8
+# iCloud sync needs the one-off steps in docs/icloud-setup.md.
 
 on:
   workflow_dispatch:
@@ -30,6 +32,8 @@ jobs:
       APP_BUNDLE_ID: ${{ vars.APP_BUNDLE_ID }}
       APP_DISPLAY_NAME: ${{ vars.APP_DISPLAY_NAME || 'Quire' }}
       TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+      CLOUDKIT_CONTAINER: ${{ vars.CLOUDKIT_CONTAINER || format('iCloud.{0}', vars.APP_BUNDLE_ID) }}
+      ICLOUD_SYNC: ${{ vars.ICLOUD_SYNC || 'on' }}
       ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
       ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
     steps:
@@ -78,6 +82,13 @@ jobs:
             echo "PRO_FLAG=TESTFLIGHT_PRO" >> "$GITHUB_ENV"
             echo "Building for testers: Pro unlocked."
           fi
+          if [ "$ICLOUD_SYNC" = "off" ]; then
+            echo "CLOUD_SYNC=NO" >> "$GITHUB_ENV"
+            echo "iCloud sync: off (ICLOUD_SYNC variable)."
+          else
+            echo "CLOUD_SYNC=YES" >> "$GITHUB_ENV"
+            echo "iCloud sync: on, container $CLOUDKIT_CONTAINER."
+          fi
 
       # Archive unsigned: an automatic-signing archive would need a development
       # profile, which requires registered devices. The export step below signs
@@ -96,10 +107,38 @@ jobs:
             DEVELOPMENT_TEAM="$TEAM_ID" \
             CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
             SWIFT_ACTIVE_COMPILATION_CONDITIONS="$PRO_FLAG" \
+            CLOUD_SYNC="$CLOUD_SYNC" \
+            CLOUDKIT_CONTAINER_ID="$CLOUDKIT_CONTAINER" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
             -quiet 2>&1 | tee archive.log
+
+      # The archive is unsigned, so it carries no entitlements, and the export
+      # step takes the app's entitlements from its existing signature. Give it a
+      # throwaway (ad hoc) signature with the iCloud entitlements; the export then
+      # re-signs it for distribution with a profile that includes iCloud.
+      - name: Add iCloud entitlements
+        if: env.CLOUD_SYNC == 'YES'
+        run: |
+          APP=$(ls -d "$RUNNER_TEMP/MusicLibrary.xcarchive/Products/Applications/"*.app | head -1)
+          cat > "$RUNNER_TEMP/iCloud.entitlements" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>aps-environment</key><string>production</string>
+            <key>com.apple.developer.icloud-container-environment</key><string>Production</string>
+            <key>com.apple.developer.icloud-container-identifiers</key>
+            <array><string>$CLOUDKIT_CONTAINER</string></array>
+            <key>com.apple.developer.icloud-services</key>
+            <array><string>CloudKit</string></array>
+          </dict>
+          </plist>
+          PLIST
+          codesign --force --sign - --timestamp=none \
+            --entitlements "$RUNNER_TEMP/iCloud.entitlements" "$APP"
+          codesign -d --entitlements - "$APP"
 
       - name: Sign and upload to App Store Connect
         run: |
@@ -118,6 +157,31 @@ jobs:
           </plist>
           PLIST
           set -o pipefail
+          # First export to a folder and check the signed app really has iCloud,
+          # so a build without sync is never uploaded by mistake.
+          if [ "$CLOUD_SYNC" = "YES" ]; then
+            sed 's#<string>upload</string>#<string>export</string>#' \
+              "$RUNNER_TEMP/ExportOptions.plist" > "$RUNNER_TEMP/ExportCheck.plist"
+            xcodebuild -exportArchive \
+              -archivePath "$RUNNER_TEMP/MusicLibrary.xcarchive" \
+              -exportOptionsPlist "$RUNNER_TEMP/ExportCheck.plist" \
+              -exportPath "$RUNNER_TEMP/check" \
+              -allowProvisioningUpdates \
+              -authenticationKeyPath "$ASC_KEY_PATH" \
+              -authenticationKeyID "$ASC_KEY_ID" \
+              -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+              2>&1 | tee export-check.log
+            mkdir -p "$RUNNER_TEMP/ipa" && unzip -q -o "$RUNNER_TEMP/check/"*.ipa -d "$RUNNER_TEMP/ipa"
+            SIGNED=$(ls -d "$RUNNER_TEMP/ipa/Payload/"*.app | head -1)
+            codesign -d --entitlements - --xml "$SIGNED" > "$RUNNER_TEMP/signed.plist" 2>/dev/null \
+              || codesign -d --entitlements :- "$SIGNED" > "$RUNNER_TEMP/signed.plist"
+            if ! grep -q "$CLOUDKIT_CONTAINER" "$RUNNER_TEMP/signed.plist"; then
+              echo "::error::The signed app has no iCloud entitlement. Check the iCloud capability and container on your App ID (docs/icloud-setup.md, steps 1-2), or set the ICLOUD_SYNC variable to off."
+              cat "$RUNNER_TEMP/signed.plist"
+              exit 1
+            fi
+            echo "iCloud entitlements present for $CLOUDKIT_CONTAINER."
+          fi
           xcodebuild -exportArchive \
             -archivePath "$RUNNER_TEMP/MusicLibrary.xcarchive" \
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \

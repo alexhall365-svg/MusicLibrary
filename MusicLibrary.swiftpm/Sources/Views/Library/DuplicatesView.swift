@@ -178,7 +178,8 @@ struct DuplicatesView: View {
     private func scan() async {
         progressText = "Preparing…"
         selectedForDeletion = []
-        let scores = allScores
+        // Choir music is managed in its Choir Library, not here.
+        let scores = allScores.filter(\.isPersonal)
         var texts: [UUID: String] = [:]
 
         if compareContents {

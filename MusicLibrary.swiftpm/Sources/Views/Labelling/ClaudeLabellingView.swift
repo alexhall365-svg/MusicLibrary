@@ -7,7 +7,10 @@ import UniformTypeIdentifiers
 struct ClaudeLabellingView: View {
     @Environment(AppState.self) private var appState
     @Environment(\.modelContext) private var modelContext
-    @Query(sort: \Score.dateAdded) private var scores: [Score]
+    @Query(sort: \Score.dateAdded) private var allScores: [Score]
+
+    /// Scores this person can change (not music in a choir they only view).
+    private var scores: [Score] { allScores.filter { CloudSync.shared.canEdit($0) } }
     @AppStorage("labelling.onlyMissing") private var onlyMissing = true
     @AppStorage("labelling.batchSize") private var batchSize = 50
     @State private var exportedFiles: [URL] = []
