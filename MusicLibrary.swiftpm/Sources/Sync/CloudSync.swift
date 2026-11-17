@@ -48,7 +48,7 @@ final class CloudSync {
     private(set) var pendingChanges = 0
     private(set) var lastSync: Date?
     /// A problem worth showing (iCloud full, signed out…).
-    private(set) var problem: String?
+    var problem: String?
     private(set) var choirs: [ChoirInfo] = []
 
     var hostedChoir: ChoirInfo? { choirs.first { $0.isOwner } }
