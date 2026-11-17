@@ -48,6 +48,7 @@ targets:
         UIBackgroundModes:
           - remote-notification
         LSApplicationCategoryType: public.app-category.music
+        NSHumanReadableCopyright: "© 2026 Alex Hall. All rights reserved."
         LSRequiresIPhoneOS: true
         LSSupportsOpeningDocumentsInPlace: false
         UIApplicationSupportsIndirectInputEvents: true

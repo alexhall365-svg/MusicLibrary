@@ -58,3 +58,8 @@ xcodebuild test -project MusicLibrary.xcodeproj -scheme MusicLibrary \
 
 ## Data and privacy
 Everything stays on the device (Apple Intelligence runs on the device too), in the app's Application Support folder: `Library.store` (database), `Scores/` (PDF copies) and `Annotations/`. That folder is included in the iPad's own iCloud/Finder device backup. TestFlight and App Store builds also sync it through your private iCloud (CloudKit), and can share a Choir Library with your choir; see `docs/icloud-setup.md` and `docs/choir-guide.md`. Otherwise the app makes no network requests.
+
+## Copyright
+
+© 2026 Alex Hall. All rights reserved. This source code is published for reference only and is **not open source**: it may not be copied, modified, redistributed or used to build other apps without written permission. See [LICENSE](LICENSE).
+

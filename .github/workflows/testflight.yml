@@ -29,6 +29,10 @@ concurrency:
   group: testflight
   cancel-in-progress: false
 
+# The workflow token can only read the code.
+permissions:
+  contents: read
+
 jobs:
   upload:
     runs-on: macos-15
