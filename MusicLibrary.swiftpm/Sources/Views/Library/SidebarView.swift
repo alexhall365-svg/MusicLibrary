@@ -141,10 +141,9 @@ struct SidebarView: View {
             }
             Button("Cancel", role: .cancel) { setlistToRename = nil }
         }
-        .confirmationDialog(
-            "Delete \"\(setlistToDelete?.name ?? "")\"?",
-            isPresented: Binding(get: { setlistToDelete != nil }, set: { if !$0 { setlistToDelete = nil } }),
-            titleVisibility: .visible
+        .alert(
+            "Delete \u{201C}\(setlistToDelete?.name ?? "")\u{201D}?",
+            isPresented: Binding(get: { setlistToDelete != nil }, set: { if !$0 { setlistToDelete = nil } })
         ) {
             Button("Delete Setlist", role: .destructive) {
                 if let setlist = setlistToDelete {
@@ -154,6 +153,7 @@ struct SidebarView: View {
                 }
                 setlistToDelete = nil
             }
+            Button("Cancel", role: .cancel) { setlistToDelete = nil }
         } message: {
             if setlistToDelete?.cloudLibrary != nil {
                 Text("The list is removed for everyone in the choir. The music stays in the Choir Library.")

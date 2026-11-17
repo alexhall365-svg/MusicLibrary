@@ -4,6 +4,18 @@ import SwiftData
 /// Library changes that touch both the database and files.
 @MainActor
 enum LibraryActions {
+    static func delete(_ scores: [Score], context: ModelContext) {
+        let items = scores.map { ($0.id, $0.fileURL) }
+        scores.forEach { context.delete($0) }
+        try? context.save()
+        let store = AnnotationStore()
+        for (id, file) in items {
+            try? FileManager.default.removeItem(at: file)
+            store.deleteAll(for: id)
+            ThumbnailCache.shared.remove(id)
+        }
+    }
+
     static func delete(_ score: Score, context: ModelContext) {
         let id = score.id
         let file = score.fileURL

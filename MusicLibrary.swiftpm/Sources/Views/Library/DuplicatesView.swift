@@ -79,14 +79,14 @@ struct DuplicatesView: View {
                 .disabled(selectedForDeletion.isEmpty)
             }
         }
-        .confirmationDialog(
-            "Delete \(selectedForDeletion.count) score\(selectedForDeletion.count == 1 ? "" : "s")?",
-            isPresented: $confirmDelete,
-            titleVisibility: .visible
+        .alert(
+            "Delete \(selectedForDeletion.count) Score\(selectedForDeletion.count == 1 ? "" : "s")?",
+            isPresented: $confirmDelete
         ) {
             Button("Delete", role: .destructive) { deleteSelected(byID: byID) }
+            Button("Cancel", role: .cancel) {}
         } message: {
-            Text("The selected copies are removed with their annotations. Setlist entries move to the copy you keep.")
+            Text("The selected copies are removed from this device with their annotations. Setlist entries move to the copy you keep. This can't be undone.")
         }
     }
 
