@@ -17,6 +17,7 @@ extension CloudSync {
             }
         }
         let records = changes.modifications.map(\.record).sorted { rank($0) < rank($1) }
+        countReceived(records.filter { $0.recordType == SyncRecordName.scoreFileType }.count)
         for record in records {
             let library = CloudLibrary.key(for: record.recordID.zoneID, scope: scope)
             if let share = record as? CKShare {

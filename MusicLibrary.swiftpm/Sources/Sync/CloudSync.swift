@@ -50,6 +50,12 @@ final class CloudSync {
     /// A problem worth showing (iCloud full, signed out…).
     var problem: String?
     private(set) var choirs: [ChoirInfo] = []
+    /// Your own scores on this device, and how many of their PDFs are in iCloud.
+    private(set) var scoresHere = 0
+    private(set) var scoresInICloud = 0
+    /// PDFs received during the current check with iCloud.
+    private(set) var pdfsReceived = 0
+
     /// Recent sync activity, newest last, for "Sync Log" in Settings.
     private(set) var log: [String] = []
 
@@ -320,8 +326,17 @@ final class CloudSync {
     }
 
     private func updatePendingCount() {
-        pendingChanges = [privateEngine, sharedEngine].compactMap { $0 }
+        let pending = [privateEngine, sharedEngine].compactMap { $0 }
             .reduce(0) { $0 + $1.state.pendingRecordZoneChanges.count }
+        if pendingChanges != pending { pendingChanges = pending }
+        let counts = personalScoreCounts()
+        if scoresHere != counts.here { scoresHere = counts.here }
+        if scoresInICloud != counts.inICloud { scoresInICloud = counts.inICloud }
+    }
+
+    /// Counts PDFs as they arrive, for the progress banner.
+    func countReceived(_ count: Int) {
+        if count > 0 { pdfsReceived += count }
     }
 
     // MARK: - Log and details
@@ -523,6 +538,7 @@ extension CloudSync: CKSyncEngineDelegate {
 
         case .willFetchChanges:
             isFetching = true
+            pdfsReceived = 0
 
         case .didFetchChanges:
             note("\(scopeName(scope)): finished checking iCloud")

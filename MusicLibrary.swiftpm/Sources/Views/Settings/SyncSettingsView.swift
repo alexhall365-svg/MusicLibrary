@@ -181,6 +181,9 @@ struct SyncSettingsView: View {
         Section("Sync Details") {
             LabeledContent("Your scores on this device", value: "\(counts.here)")
             LabeledContent("Of those, in iCloud", value: "\(counts.inICloud)")
+            if counts.here > 0 && counts.inICloud < counts.here {
+                ProgressView(value: Double(counts.inICloud), total: Double(counts.here))
+            }
             LabeledContent("Waiting to upload", value: "\(sync.pendingChanges)")
             NavigationLink("Sync Log") { SyncLogView() }
         }
@@ -317,5 +320,58 @@ struct SyncLogView: View {
                 Button("Clear", systemImage: "trash", role: .destructive) { sync.clearLog() }
             }
         }
+    }
+}
+
+/// A small banner showing uploads and downloads while they run, so a long
+/// first sync doesn't look stuck.
+struct SyncProgressBanner: View {
+    @Environment(CloudSync.self) private var sync
+
+    private var uploading: Bool {
+        sync.isEnabled && sync.hasDownloadedOnce && sync.pendingChanges > 0
+            && sync.scoresInICloud < sync.scoresHere
+    }
+
+    private var downloading: Bool {
+        sync.isEnabled && sync.isFetching && sync.pdfsReceived > 0
+    }
+
+    var body: some View {
+        Group {
+            if uploading {
+                banner(icon: "icloud.and.arrow.up") {
+                    Text("Uploading to iCloud: \(sync.scoresInICloud) of \(sync.scoresHere) scores")
+                        .font(.footnote.weight(.semibold))
+                        .monospacedDigit()
+                    ProgressView(value: Double(sync.scoresInICloud), total: Double(max(sync.scoresHere, 1)))
+                        .frame(width: 200)
+                }
+            } else if downloading {
+                banner(icon: "icloud.and.arrow.down") {
+                    Text("Downloading from iCloud: \(sync.pdfsReceived) score\(sync.pdfsReceived == 1 ? "" : "s") received")
+                        .font(.footnote.weight(.semibold))
+                        .monospacedDigit()
+                    ProgressView()
+                        .progressViewStyle(.linear)
+                        .frame(width: 200)
+                }
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: uploading)
+        .animation(.easeInOut(duration: 0.2), value: downloading)
+    }
+
+    private func banner<Content: View>(icon: String, @ViewBuilder content: () -> Content) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .foregroundStyle(Color.accentColor)
+            VStack(alignment: .leading, spacing: 4) { content() }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(.regularMaterial, in: Capsule())
+        .shadow(color: .black.opacity(0.15), radius: 8, y: 2)
+        .accessibilityElement(children: .combine)
     }
 }

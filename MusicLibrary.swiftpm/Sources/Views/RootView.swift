@@ -56,8 +56,11 @@ struct RootView: View {
             Text(alert.message)
         }
         .overlay(alignment: .bottom) {
-            AutoLabelBanner(labeler: appState.autoLabeler)
-                .padding(.bottom, 12)
+            VStack(spacing: 8) {
+                SyncProgressBanner()
+                AutoLabelBanner(labeler: appState.autoLabeler)
+            }
+            .padding(.bottom, 12)
         }
         .overlay {
             if let message = appState.busyMessage {
