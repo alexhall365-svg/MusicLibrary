@@ -99,8 +99,8 @@ struct ScoreEditorView: View {
             }
             .onAppear { aiStatus = AppleIntelligence.status }
             .sheet(isPresented: $showingPaywall) { PaywallView() }
-            .confirmationDialog("Delete this score?", isPresented: $confirmDelete, titleVisibility: .visible) {
-                Button("Delete Score", role: .destructive) {
+            .alert("Delete \u{201C}\(score.displayTitle)\u{201D}?", isPresented: $confirmDelete) {
+                Button("Delete", role: .destructive) {
                     let context = modelContext
                     let target = score
                     dismiss()
@@ -108,8 +108,9 @@ struct ScoreEditorView: View {
                         LibraryActions.delete(target, context: context)
                     }
                 }
+                Button("Cancel", role: .cancel) {}
             } message: {
-                Text("This removes the PDF, its annotations and its place in any setlists.")
+                Text("This removes the PDF from this device, with its details, annotations and place in any setlists. This can't be undone.")
             }
         }
     }

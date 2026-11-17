@@ -71,7 +71,7 @@ jobs:
             xcrun simctl ui "$UDID" appearance light || true
             xcrun simctl status_bar "$UDID" override --time 9:41 --batteryState charged --batteryLevel 100 --wifiBars 3 || true
             xcrun simctl install "$UDID" "$APP"
-            for screen in library reader setlist editor labelling duplicates paywall; do
+            for screen in library select delete reader setlist editor labelling duplicates paywall; do
               xcrun simctl terminate "$UDID" "$BUNDLE" 2>/dev/null || true
               xcrun simctl launch "$UDID" "$BUNDLE" -demoLibrary YES -demoScreen "$screen"
               sleep 9

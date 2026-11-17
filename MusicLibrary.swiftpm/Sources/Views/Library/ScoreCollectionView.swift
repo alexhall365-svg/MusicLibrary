@@ -29,8 +29,11 @@ struct ScoreCollectionView: View {
     @AppStorage("library.layout") private var layoutRaw = "grid"
     @State private var searchText = ""
     @State private var isDropTargeted = false
-    @State private var scoreToDelete: Score?
     @State private var showingPaywall = false
+    /// Scores waiting for the user to confirm deletion.
+    @State private var pendingDeletion: [Score] = []
+    @State private var isSelecting = false
+    @State private var selection: Set<UUID> = []
 
     private var sort: ScoreSort {
         scope == .recent ? .recentlyOpened : (ScoreSort(rawValue: sortRaw) ?? .title)
@@ -65,19 +68,50 @@ struct ScoreCollectionView: View {
                 grid(visible)
             }
         }
-        .navigationTitle(scope.title)
+        .navigationTitle(isSelecting ? selectionTitle : scope.title)
+        .navigationBarTitleDisplayMode(isSelecting ? .inline : .automatic)
         .searchable(text: $searchText, prompt: "Title, composer, catalogue…")
         .toolbar {
-            ToolbarItemGroup(placement: .primaryAction) {
-                if scope != .recent { sortMenu }
-                Button {
-                    layoutRaw = layoutRaw == "list" ? "grid" : "list"
-                } label: {
-                    Label(
-                        layoutRaw == "list" ? "Show as Grid" : "Show as List",
-                        systemImage: layoutRaw == "list" ? "square.grid.2x2" : "list.bullet")
+            if isSelecting {
+                ToolbarItem(placement: .cancellationAction) {
+                    let allSelected = !visible.isEmpty && visible.allSatisfy { selection.contains($0.id) }
+                    Button(allSelected ? "Deselect All" : "Select All") {
+                        selection = allSelected ? [] : Set(visible.map(\.id))
+                    }
                 }
-                ImportMenu()
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { endSelecting() }
+                }
+                ToolbarItemGroup(placement: .bottomBar) {
+                    addToSetlistMenu(for: selectedScores(in: visible))
+                        .disabled(selection.isEmpty)
+                    Spacer()
+                    Button(role: .destructive) {
+                        pendingDeletion = selectedScores(in: visible)
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                    .disabled(selection.isEmpty)
+                }
+            } else {
+                ToolbarItemGroup(placement: .primaryAction) {
+                    if scope != .recent { sortMenu }
+                    Button {
+                        layoutRaw = layoutRaw == "list" ? "grid" : "list"
+                    } label: {
+                        Label(
+                            layoutRaw == "list" ? "Show as Grid" : "Show as List",
+                            systemImage: layoutRaw == "list" ? "square.grid.2x2" : "list.bullet")
+                    }
+                    if !visible.isEmpty {
+                        Button {
+                            isSelecting = true
+                        } label: {
+                            Label("Select", systemImage: "checkmark.circle")
+                        }
+                    }
+                    ImportMenu()
+                }
             }
         }
         .onDrop(of: [.pdf], isTargeted: $isDropTargeted) { providers in
@@ -93,17 +127,71 @@ struct ScoreCollectionView: View {
             }
         }
         .sheet(isPresented: $showingPaywall) { PaywallView() }
-        .confirmationDialog(
-            "Delete \"\(scoreToDelete?.displayTitle ?? "")\"?",
-            isPresented: Binding(get: { scoreToDelete != nil }, set: { if !$0 { scoreToDelete = nil } }),
-            titleVisibility: .visible
-        ) {
-            Button("Delete Score", role: .destructive) {
-                if let score = scoreToDelete { LibraryActions.delete(score, context: modelContext) }
-                scoreToDelete = nil
+        .deleteConfirmation(for: $pendingDeletion) { scores in
+            LibraryActions.delete(scores, context: modelContext)
+            selection.subtract(scores.map(\.id))
+            if isSelecting && selection.isEmpty { endSelecting() }
+        }
+        .onChange(of: scope) { _, _ in endSelecting() }
+        .task {
+            if UserDefaults.standard.bool(forKey: "demoLibrary") {
+                let demo = UserDefaults.standard.string(forKey: "demoScreen")
+                if demo == "select" || demo == "delete" {
+                    isSelecting = true
+                    selection = Set(visible.prefix(3).map(\.id))
+                    if demo == "delete" { pendingDeletion = selectedScores(in: visible) }
+                }
             }
-        } message: {
-            Text("This removes the PDF, its annotations and its place in any setlists.")
+        }
+    }
+
+    // MARK: Selection
+
+    private var selectionTitle: String {
+        selection.isEmpty ? "Select Scores" : "\(selection.count) Selected"
+    }
+
+    private func selectedScores(in visible: [Score]) -> [Score] {
+        visible.filter { selection.contains($0.id) }
+    }
+
+    private func endSelecting() {
+        isSelecting = false
+        selection = []
+    }
+
+    private func toggleSelection(_ score: Score) {
+        if selection.contains(score.id) {
+            selection.remove(score.id)
+        } else {
+            selection.insert(score.id)
+        }
+    }
+
+    private func tapped(_ score: Score) {
+        if isSelecting {
+            toggleSelection(score)
+        } else {
+            open(score)
+        }
+    }
+
+    private func addToSetlistMenu(for scores: [Score]) -> some View {
+        Menu {
+            ForEach(setlists) { setlist in
+                Button(setlist.name) {
+                    LibraryActions.add(scores, to: setlist, context: modelContext)
+                    if isSelecting { endSelecting() }
+                }
+            }
+            Button("New Setlist", systemImage: "plus") {
+                let name = scores.count == 1 ? scores[0].displayTitle : "New Setlist"
+                let setlist = LibraryActions.createSetlist(named: name, context: modelContext)
+                LibraryActions.add(scores, to: setlist, context: modelContext)
+                if isSelecting { endSelecting() }
+            }
+        } label: {
+            Label("Add to Setlist", systemImage: "text.badge.plus")
         }
     }
 
@@ -150,11 +238,16 @@ struct ScoreCollectionView: View {
                 spacing: 28
             ) {
                 ForEach(scores) { score in
-                    Button { open(score) } label: {
+                    Button { tapped(score) } label: {
                         ScoreGridItem(score: score)
+                            .overlay(alignment: .topLeading) {
+                                if isSelecting { SelectionMark(isSelected: selection.contains(score.id)).padding(6) }
+                            }
+                            .opacity(isSelecting && !selection.contains(score.id) ? 0.75 : 1)
                     }
                     .buttonStyle(.plain)
-                    .contextMenu { menu(for: score) }
+                    .accessibilityAddTraits(isSelecting && selection.contains(score.id) ? .isSelected : [])
+                    .contextMenu { if !isSelecting { menu(for: score) } }
                 }
             }
             .padding()
@@ -163,14 +256,20 @@ struct ScoreCollectionView: View {
 
     private func list(_ scores: [Score]) -> some View {
         List(scores) { score in
-            Button { open(score) } label: {
-                ScoreListRow(score: score)
+            Button { tapped(score) } label: {
+                HStack(spacing: 12) {
+                    if isSelecting { SelectionMark(isSelected: selection.contains(score.id)) }
+                    ScoreListRow(score: score)
+                }
             }
             .buttonStyle(.plain)
-            .contextMenu { menu(for: score) }
+            .accessibilityAddTraits(isSelecting && selection.contains(score.id) ? .isSelected : [])
+            .contextMenu { if !isSelecting { menu(for: score) } }
             .swipeActions {
-                Button("Delete", systemImage: "trash", role: .destructive) { scoreToDelete = score }
-                Button("Details", systemImage: "info.circle") { appState.editingScore = score }
+                if !isSelecting {
+                    Button("Delete", systemImage: "trash", role: .destructive) { pendingDeletion = [score] }
+                    Button("Details", systemImage: "info.circle") { appState.editingScore = score }
+                }
             }
         }
         .listStyle(.plain)
@@ -190,21 +289,13 @@ struct ScoreCollectionView: View {
             }
             .disabled(appState.autoLabeler.isRunning)
         }
-        Menu {
-            ForEach(setlists) { setlist in
-                Button(setlist.name) {
-                    LibraryActions.add([score], to: setlist, context: modelContext)
-                }
-            }
-            Button("New Setlist", systemImage: "plus") {
-                let setlist = LibraryActions.createSetlist(named: score.displayTitle, context: modelContext)
-                LibraryActions.add([score], to: setlist, context: modelContext)
-            }
-        } label: {
-            Label("Add to Setlist", systemImage: "text.badge.plus")
+        addToSetlistMenu(for: [score])
+        Button("Select", systemImage: "checkmark.circle") {
+            isSelecting = true
+            selection = [score.id]
         }
         Divider()
-        Button("Delete", systemImage: "trash", role: .destructive) { scoreToDelete = score }
+        Button("Delete", systemImage: "trash", role: .destructive) { pendingDeletion = [score] }
     }
 
     private func open(_ score: Score) {
@@ -314,5 +405,19 @@ struct ScoreThumbnailView: View {
                 image = await ThumbnailCache.shared.thumbnail(for: scoreID, pdfURL: fileURL)
             }
         }
+    }
+}
+
+/// The tick circle shown on scores while selecting.
+struct SelectionMark: View {
+    let isSelected: Bool
+
+    var body: some View {
+        Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+            .font(.title2)
+            .symbolRenderingMode(.palette)
+            .foregroundStyle(isSelected ? Color.white : Color.secondary, isSelected ? Color.accentColor : Color.clear)
+            .background(Circle().fill(.background.opacity(isSelected ? 0 : 0.8)))
+            .accessibilityHidden(true)
     }
 }
