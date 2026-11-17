@@ -92,8 +92,8 @@ enum ScoringNames {
 
         if voicing.isEmpty {
             guard let first = found.first else { return trimmed }
-            let rest = found.dropFirst()
-            return ([first.prefix(1).uppercased() + first.dropFirst()] + rest).joined(separator: " + ")
+            let capitalised = first.prefix(1).uppercased() + String(first.dropFirst())
+            return ([capitalised] + Array(found.dropFirst())).joined(separator: " + ")
         }
         return ([voicing] + found).joined(separator: " + ")
     }
