@@ -1,0 +1,30 @@
+name: TestFlight Crashes
+
+# Fetches recent TestFlight crash reports and prints the technical details
+# (build, device, OS, exception and crashed stack) so they can be diagnosed.
+# Tester names, emails and comments are never printed: this repo's logs are public.
+
+on:
+  workflow_dispatch:
+    inputs:
+      count:
+        description: "How many recent crash reports"
+        default: "5"
+
+permissions:
+  contents: read
+
+jobs:
+  crashes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      APP_BUNDLE_ID: ${{ vars.APP_BUNDLE_ID }}
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+      CRASH_COUNT: ${{ inputs.count }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install --quiet pyjwt cryptography
+      - run: python3 scripts/testflight_crashes.py
