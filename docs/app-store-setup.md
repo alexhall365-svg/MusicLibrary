@@ -77,7 +77,7 @@ A laptop is optional. It only makes Step 4 easier.
 2. Wait for the green tick: **about 15 minutes**. Then Apple processes the build for **another 5–30 minutes**. You get an email when it's ready.
 3. **If it turns red:** tell Claude "the TestFlight run failed". Claude can read the logs and fix it. First runs often need one small fix.
 
-> **Pro on TestFlight:** testers don't get Pro, and can't buy it in TestFlight (test purchases are free, so they're blocked). Only the owners listed in the `PRO_OWNERS` repository variable have Pro. Find your ID in the app under **iCloud & Choir → Sync Details → Your iCloud ID** (tap to copy). For the build you **submit to the App Store**, tick **"Build to submit to the App Store"**, so App Review can make a test purchase.
+> **Pro on TestFlight:** testers don't get Pro, and can't buy it in TestFlight (test purchases are free, so they're blocked). Only the owners listed in the `PRO_OWNERS` repository **secret** have Pro. Find your ID in the app under **iCloud & Choir → Sync Details → Your iCloud ID** (tap to copy). For the build you **submit to the App Store**, tick **"Build to submit to the App Store"**, so App Review can make a test purchase.
 
 ## Step 7: Install it on your iPad and iPhone (internal testing, 5 min)
 1. Install **TestFlight** from the App Store, on both devices.
