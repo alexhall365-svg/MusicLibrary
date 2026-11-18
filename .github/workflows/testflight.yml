@@ -6,7 +6,7 @@ name: TestFlight
 #
 # One-off setup (see docs/app-store-setup.md):
 #   Repository variables: APP_BUNDLE_ID, APPLE_TEAM_ID (optional: APP_DISPLAY_NAME,
-#                         PRO_OWNERS = iCloud IDs that always get Pro, comma-separated,
+#                         and the secret PRO_OWNERS = iCloud IDs that always get Pro,
 #                         CLOUDKIT_CONTAINER, ICLOUD_SYNC=off to build without iCloud)
 #   Repository secrets:   ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8
 # iCloud sync needs the one-off steps in docs/icloud-setup.md.
@@ -43,7 +43,8 @@ jobs:
       TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
       CLOUDKIT_CONTAINER: ${{ vars.CLOUDKIT_CONTAINER || format('iCloud.{0}', vars.APP_BUNDLE_ID) }}
       ICLOUD_SYNC: ${{ vars.ICLOUD_SYNC || 'on' }}
-      PRO_OWNERS: ${{ vars.PRO_OWNERS }}
+      # A secret, so the IDs never appear in the (public) logs.
+      PRO_OWNERS: ${{ secrets.PRO_OWNERS || vars.PRO_OWNERS }}
       ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
       ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
     steps:
@@ -90,7 +91,7 @@ jobs:
             echo "Building with Pro unlocked for every tester."
           else
             echo "PRO_FLAG=" >> "$GITHUB_ENV"
-            echo "Pro only for owners: ${PRO_OWNERS:-(none set yet)}."
+            if [ -n "$PRO_OWNERS" ]; then echo "Pro only for the owners in PRO_OWNERS."; else echo "::warning::PRO_OWNERS isn't set, so nobody has Pro in this build."; fi
           fi
           if [ "${{ inputs.for_app_review }}" = "true" ]; then
             echo "BLOCK_TEST_PURCHASES=NO" >> "$GITHUB_ENV"
