@@ -96,6 +96,36 @@ final class SyncTests: XCTestCase {
         XCTAssertNotEqual(before, ScoreRecordValues(score: score).fingerprint)
     }
 
+    // MARK: - Director's markings
+
+    func testOwnersMarkingsOnGroupMusicAreSharedMembersStayPrivate() {
+        let hosted = CloudLibrary.hostedKey(zoneName: "Choir-1")
+        let joined = "shared/_owner/Choir-1"
+        XCTAssertNil(CloudSync.annotationLibrary(for: nil), "your own library: private")
+        XCTAssertEqual(CloudSync.annotationLibrary(for: hosted), hosted, "group you host: shared with the group")
+        XCTAssertNil(CloudSync.annotationLibrary(for: joined), "group you joined: your markings stay private")
+    }
+
+    func testDirectorMarkingsDontCollideWithYourOwn() {
+        let id = UUID()
+        let page = SyncRecordName.annotation(scoreID: id, page: 3)
+        let joined = "shared/_owner/Choir-1"
+        XCTAssertEqual(CloudSync.ledgerKey(recordName: page, library: nil), page)
+        XCTAssertNotEqual(CloudSync.ledgerKey(recordName: page, library: joined), page)
+        XCTAssertEqual(CloudSync.ledgerKey(recordName: SyncRecordName.score(id), library: joined), SyncRecordName.score(id))
+    }
+
+    func testDirectorFilesAreNotUploadedAsYourOwn() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let store = AnnotationStore(paths: LibraryPaths(root: root, cachesRoot: root))
+        let id = UUID()
+        let director = store.directorFileURL(scoreID: id, page: 0)
+        try FileManager.default.createDirectory(at: director.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try Data([1, 2, 3]).write(to: director)
+        XCTAssertTrue(store.allPages().isEmpty, "the director's layer is never treated as your own annotations")
+        XCTAssertFalse(store.hasAnnotations(for: id))
+    }
+
     // MARK: - Working out what to send
 
     func testDiffFindsNewChangedMovedAndDeleted() {

@@ -8,13 +8,13 @@ This app is designed to keep your music and information private.
 
 **Your files:** PDFs you import, their details, annotations and setlists are stored on your device, in the app's private storage. They are included in your device's own iCloud or computer backups, which are controlled by you and Apple.
 
-**iCloud sync (optional, on by default):** to keep your own devices in step, your library is also copied to your private iCloud storage using Apple's CloudKit. It is stored in your iCloud account, under Apple's privacy policy; the developer cannot see it. You can turn this off in the app under iCloud & Choir.
+**iCloud sync (optional, on by default):** to keep your own devices in step, your library is also copied to your private iCloud storage using Apple's CloudKit. It is stored in your iCloud account, under Apple's privacy policy; the developer cannot see it. You can turn this off in the app under iCloud & Groups.
 
-**Choir Library (optional):** if you create a Choir Library, the music and lists you put in it are shared, through iCloud, with the people you invite. If you join one, you receive the music the choir's owner shares. Your annotations are never shared with other members.
+**Shared groups (optional):** if you create a shared group (for example for a choir, band or orchestra), the music and lists you put in it, and your markings on that music, are shared through iCloud with anyone you send the group's link to. If you join a group, you receive the music, lists and markings its owner shares; your own markings on that music stay private to you.
 
 **Apple Intelligence:** If you use automatic labelling, the text from your scores is processed by Apple's on-device model on your device. It is not sent to the developer.
 
-**Sharing:** Files leave your device only when you choose to share or export them (for example, to the Files app, AirDrop or another app such as Claude). What happens to them then is governed by the service you share them with.
+**Sharing:** Files leave your device only when you choose to share or export them (for example, to the Files app, AirDrop or another app). What happens to them then is governed by the service you share them with.
 
 **Purchases:** Purchases are handled by Apple. The developer receives no payment details.
 

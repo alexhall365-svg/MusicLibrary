@@ -1,6 +1,6 @@
 # Metadata exchange format: version 1
 
-This JSON format is the contract between the app and Claude (or any other tool). The app exports it and imports it, and it is the planned basis for library sharing.
+This JSON format describes scores in an import package: a folder of PDFs plus a `metadata.json`. Import the folder and the app matches each entry to its PDF, then shows a review screen.
 
 ```json
 {
@@ -8,7 +8,7 @@ This JSON format is the contract between the app and Claude (or any other tool).
   "version": 1,
   "exportedAt": "2026-11-15T20:00:00Z",
   "generator": "Quire 0.1.0",
-  "instructionsForClaude": "…present only in exports for labelling…",
+  "instructionsForClaude": "…older files only; ignored…",
   "scores": [
     {
       "id": "2F1C…-UUID",

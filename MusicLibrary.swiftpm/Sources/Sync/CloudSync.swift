@@ -309,14 +309,22 @@ final class CloudSync {
                 library: setlist.cloudLibrary,
                 fingerprint: SetlistRecordValues(setlist: setlist).fingerprint))
         }
+        let libraries = Dictionary(scores.map { ($0.id, $0.cloudLibrary) }, uniquingKeysWith: { first, _ in first })
         for page in annotations.allPages() {
             guard let fingerprint = SyncFingerprint.ofFile(at: page.url) else { continue }
             result.append(LocalRecordState(
                 recordName: SyncRecordName.annotation(scoreID: page.scoreID, page: page.page),
-                library: nil,
+                library: annotationLibrary(for: libraries[page.scoreID] ?? nil),
                 fingerprint: fingerprint))
         }
         return result
+    }
+
+    /// Where your own annotations on a score are stored. On music in a group you
+    /// host they are the director's markings, shared with the whole group.
+    /// Everywhere else (your library, groups you joined) they stay private.
+    static func annotationLibrary(for scoreLibrary: String?) -> String? {
+        CloudLibrary.isHosted(scoreLibrary) ? scoreLibrary : nil
     }
 
     private func hasFetchedOnce(_ scope: CKDatabase.Scope) -> Bool {
@@ -672,7 +680,8 @@ extension CloudSync {
             return record
 
         case .annotation(let scoreID, let page):
-            guard library == nil else { return nil }
+            let scoreLibrary = Self.fetchScore(scoreID, context: context)?.cloudLibrary
+            guard library == Self.annotationLibrary(for: scoreLibrary) else { return nil }
             let url = AnnotationStore().fileURL(scoreID: scoreID, page: page)
             guard let fingerprint = SyncFingerprint.ofFile(at: url) else { return nil }
             // Upload a snapshot, so later pen strokes can't change the file mid-upload.
@@ -750,7 +759,7 @@ extension CloudSync {
                     info.canEdit = false
                     upsertChoir(info)
                 }
-                problem = "You can only view this Choir Library. Ask its owner to make you an editor."
+                problem = "You can only view this group. Only its owner can change the music."
             case .quotaExceeded:
                 report(failure.error)
                 retry.append(.saveRecord(record.recordID))
@@ -843,7 +852,7 @@ extension CloudSync {
         if choir(library) == nil {
             upsertChoir(ChoirInfo(
                 id: library,
-                name: "Choir Library",
+                name: "Shared Group",
                 isOwner: scope == .private,
                 canEdit: scope == .private,
                 ownerName: nil))
@@ -962,7 +971,7 @@ extension CloudSync {
         }
         upsertChoir(ChoirInfo(
             id: library,
-            name: (title?.isEmpty == false ? title : nil) ?? current?.name ?? "Choir Library",
+            name: (title?.isEmpty == false ? title : nil) ?? current?.name ?? "Shared Group",
             isOwner: isOwner,
             canEdit: isOwner || permission == .readWrite,
             ownerName: ownerName ?? current?.ownerName,

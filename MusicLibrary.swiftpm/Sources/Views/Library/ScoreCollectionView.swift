@@ -14,7 +14,7 @@ enum LibraryScope: Hashable {
         case .recent: return "Recently Opened"
         case .needsDetails: return "Needs Details"
         case .facet(let facet): return facet.value
-        case .library: return "Choir Music"
+        case .library: return "Group Music"
         }
     }
 }
@@ -142,7 +142,7 @@ struct ScoreCollectionView: View {
         }
         .onChange(of: scope) { _, _ in endSelecting() }
         .confirmationDialog(
-            "Remove \"\(scoreToRemoveFromChoir?.displayTitle ?? "")\" from the choir?",
+            "Remove \"\(scoreToRemoveFromChoir?.displayTitle ?? "")\" from the group?",
             isPresented: Binding(get: { scoreToRemoveFromChoir != nil }, set: { if !$0 { scoreToRemoveFromChoir = nil } }),
             titleVisibility: .visible
         ) {
@@ -152,7 +152,7 @@ struct ScoreCollectionView: View {
                     scoreToRemoveFromChoir = nil
                 }
             }
-            Button("Remove from Choir", role: .destructive) {
+            Button("Remove from Group", role: .destructive) {
                 if let score = scoreToRemoveFromChoir {
                     LibraryActions.removeFromChoir(score, keepCopy: false, context: modelContext)
                 }
@@ -213,7 +213,7 @@ struct ScoreCollectionView: View {
                 }
             }
             ForEach(choirLists(for: scores)) { setlist in
-                Button("\(setlist.name) (\(sync.choir(setlist.cloudLibrary)?.name ?? "Choir"))") {
+                Button("\(setlist.name) (\(sync.choir(setlist.cloudLibrary)?.name ?? "Group"))") {
                     LibraryActions.add(scores, to: setlist, context: modelContext)
                     if isSelecting { endSelecting() }
                 }
@@ -237,12 +237,12 @@ struct ScoreCollectionView: View {
 
     private var emptyChoir: some View {
         ContentUnavailableView {
-            Label("No choir music yet", systemImage: "person.3")
+            Label("No group music yet", systemImage: "person.3")
         } description: {
             if case .library(let key) = scope, sync.canEdit(key) {
-                Text("Add scores from your library with \"Add to Choir Library\" (touch and hold a score), or add them to a choir list.")
+                Text("Add scores from your library with \"Add to\" your group (touch and hold a score), or add them to a group list.")
             } else {
-                Text("Music the choir shares appears here and stays on this device for rehearsal.")
+                Text("Music the group shares appears here and stays on this device for rehearsal.")
             }
         }
     }
@@ -363,7 +363,7 @@ struct ScoreCollectionView: View {
                 }
             }
         } else if canEdit {
-            Button("Remove from Choir…", systemImage: "person.badge.minus") { scoreToRemoveFromChoir = score }
+            Button("Remove from Group…", systemImage: "person.badge.minus") { scoreToRemoveFromChoir = score }
         }
         if canEdit && score.isPersonal {
             Divider()

@@ -20,7 +20,7 @@ struct MetadataSuggestion: Sendable, Equatable {
 /// One interface for every source of metadata suggestions.
 ///
 /// Sources: `FilenameMetadataSuggester` (file names), `AppleIntelligenceSuggester`
-/// (on-device model, iOS 26+), and JSON from Claude via the exchange format.
+/// (on-device model, iOS 26+), and metadata.json import packages.
 /// Later: an optional Anthropic API key stored in the Keychain.
 protocol MetadataSuggester: Sendable {
     func suggest(for input: SuggestionInput) async -> MetadataSuggestion?

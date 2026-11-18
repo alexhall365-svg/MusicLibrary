@@ -21,7 +21,7 @@ enum CatalogueNumbers {
         return clean
     }
 
-    /// Strict version for automatic sources (Apple Intelligence, Claude, file
+    /// Strict version for automatic sources (Apple Intelligence, import packages, file
     /// names): returns a recognised catalogue number or nothing.
     static func strict(_ text: String) -> String {
         let clean = text.trimmed

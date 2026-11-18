@@ -3,7 +3,7 @@ import PDFKit
 import UIKit
 import Vision
 
-/// Reads text from the first pages of a PDF so Claude can identify the piece.
+/// Reads text from the first pages of a PDF so Apple Intelligence can identify the piece.
 /// Uses the PDF's own text layer when there is one, otherwise on-device text
 /// recognition (Vision) for scanned pages.
 enum TextExtractor {

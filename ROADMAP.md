@@ -6,7 +6,7 @@
 - [x] Reader: tap/swipe turns, two-up landscape, pre-rendering, page scrubber, performance mode, resume position
 - [x] Annotation: pen, highlighter, eraser, colours, undo/redo, Pencil-only or finger; stored separately from the PDF
 - [x] Setlists: create, reorder, play through
-- [x] Bulk labelling with Claude: export with page text/OCR, forgiving import, review screen, folder packages
+- [x] Folder import packages (PDFs plus metadata.json) with a review screen. (Bulk labelling with Claude was removed in 1.0.)
 - [x] Versioned JSON exchange format (`docs/metadata-schema.md`)
 - [x] CI build and tests on GitHub; unsigned .ipa for sideloading
 - [x] Runs on iPad alone via Swift Playgrounds (`MusicLibrary.swiftpm`)
@@ -15,7 +15,7 @@
 
 ## Next: going public (see docs/launch-plan.md)
 - [x] Signed TestFlight/App Store pipeline (GitHub Actions), privacy manifest, privacy policy
-- [x] Pro unlock (one-time £3.99, product ID `pro_unlock`): AI labelling, Claude bulk tools, duplicates; backup to follow
+- [x] Pro unlock (one-time £3.99, product ID `pro_unlock`): AI labelling, hosting a shared group, duplicates
 - [x] iPhone layout (compact reader controls, two-page view only where it fits)
 - [x] Demo library and Screenshots workflow for App Store images
 - [ ] App Store listing, screenshots, rating prompt
@@ -40,7 +40,6 @@
 - [ ] Half-page turns, crop margins, bookmarks and repeat/D.S. jump links
 - [ ] Annotation text boxes, stamps (dynamics, breaths, fingering) and layers
 - [ ] Metronome and pitch pipe
-- [ ] Optional Anthropic API key (stored in the Keychain) as another `MetadataSuggester`, for in-app Claude labelling
 - [ ] Finding public-domain scores (IMSLP, CPDL), reusing the import package and respecting each site's terms
 - [ ] Automatic Google Drive backup
 - [ ] App Store readiness: rename, final bundle ID, privacy manifest, licence review

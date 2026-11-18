@@ -54,7 +54,7 @@ private struct SetlistContentView: View {
                 } description: {
                     Text(canEdit
                          ? "Add the scores you'll need, in performance order."
-                         : "The choir hasn't added any music to this list yet.")
+                         : "The group hasn't added any music to this list yet.")
                 } actions: {
                     if canEdit {
                         Button("Add Scores") { showingAddScores = true }
@@ -85,8 +85,8 @@ private struct SetlistContentView: View {
         .safeAreaInset(edge: .top) {
             if let choir = sync.choir(setlist.cloudLibrary) {
                 Label(canEdit
-                      ? "Choir list in \(choir.name). Changes reach everyone in the choir."
-                      : "Choir list from \(choir.name). View only.",
+                      ? "Group list in \(choir.name). Changes reach everyone in the group."
+                      : "Group list from \(choir.name). View only.",
                       systemImage: "person.3")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
@@ -175,7 +175,7 @@ struct AddScoresSheet: View {
             .searchable(text: $searchText, prompt: "Search scores")
             .safeAreaInset(edge: .bottom) {
                 if setlist.cloudLibrary != nil {
-                    Text("Your own scores you add here move into the Choir Library, so every member gets them.")
+                    Text("Your own scores you add here move into the group, so every member gets them.")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                         .padding()

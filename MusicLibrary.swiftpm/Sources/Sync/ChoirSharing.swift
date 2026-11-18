@@ -12,7 +12,7 @@ enum ChoirError: LocalizedError {
         case .notAvailable:
             return "iCloud isn't available. Check you're signed in to iCloud and connected to the internet."
         case .alreadyHosting:
-            return "You already host a Choir Library."
+            return "You already host a shared group."
         }
     }
 }
@@ -52,7 +52,7 @@ extension CloudSync {
         share.publicPermission = .readOnly
         let result = try await container.privateCloudDatabase.modifyRecords(saving: [share], deleting: [])
         if case .success(let saved)? = result.saveResults[share.recordID], let savedShare = saved as? CKShare {
-            note("Choir now shared as anyone with the link (view only)")
+            note("Group now shared as anyone with the link (view only)")
             return savedShare
         }
         return share
@@ -135,7 +135,7 @@ final class ChoirSharingPresenter: NSObject, UICloudSharingControllerDelegate {
         guard let container = sync.cloudContainer else { return }
         do {
             guard let share = try await sync.ensureLinkSharing(library) else { return }
-            choirName = sync.choir(library)?.name ?? "Choir Library"
+            choirName = sync.choir(library)?.name ?? "Shared Group"
             self.library = library
             let controller = UICloudSharingController(share: share, container: container)
             // Always "Anyone with the link can view": no matching of invitees'

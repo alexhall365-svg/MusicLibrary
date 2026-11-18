@@ -1,6 +1,7 @@
 import Foundation
 
-// The JSON format shared between the app and Claude. Documented in
+// The JSON format for import packages (a folder of PDFs plus metadata.json).
+// Older files may contain instructionsForClaude, which is read and ignored. Documented in
 // docs/metadata-schema.md. Decoding is deliberately forgiving because the JSON
 // is often written by hand or by a language model.
 

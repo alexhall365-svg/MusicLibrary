@@ -84,7 +84,7 @@ struct ScoreEditorView: View {
                     }
                 } else if let choir = CloudSync.shared.choir(score.cloudLibrary) {
                     Section {
-                        Label("In \(choir.name). Changes to these details reach everyone in the choir.", systemImage: "person.3")
+                        Label("In \(choir.name). Changes to these details reach everyone in the group.", systemImage: "person.3")
                             .font(.footnote)
                             .foregroundStyle(.secondary)
                     }
