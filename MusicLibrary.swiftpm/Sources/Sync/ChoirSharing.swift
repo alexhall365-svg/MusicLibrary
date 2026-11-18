@@ -32,7 +32,7 @@ extension CloudSync {
 
         let share = CKShare(recordZoneID: zone.zoneID)
         share[CKShare.SystemFieldKey.title] = name
-        share.publicPermission = .none
+        share.publicPermission = .readOnly
         _ = try await database.modifyRecords(saving: [share], deleting: [])
 
         let info = ChoirInfo(
@@ -40,6 +40,22 @@ extension CloudSync {
             name: name, isOwner: true, canEdit: true, ownerName: nil)
         upsertChoir(info)
         return info
+    }
+
+    /// Makes sure the choir is shared as "anyone with the link can view" (older
+    /// choirs were invite-only), and returns the share.
+    @discardableResult
+    func ensureLinkSharing(_ library: String) async throws -> CKShare? {
+        guard let share = try await fetchShare(for: library) else { return nil }
+        guard CloudLibrary.isHosted(library), share.publicPermission != .readOnly,
+              let container = cloudContainer else { return share }
+        share.publicPermission = .readOnly
+        let result = try await container.privateCloudDatabase.modifyRecords(saving: [share], deleting: [])
+        if case .success(let saved)? = result.saveResults[share.recordID], let savedShare = saved as? CKShare {
+            note("Choir now shared as anyone with the link (view only)")
+            return savedShare
+        }
+        return share
     }
 
     func renameChoir(_ library: String, to name: String) async throws {
@@ -118,12 +134,13 @@ final class ChoirSharingPresenter: NSObject, UICloudSharingControllerDelegate {
         let sync = CloudSync.shared
         guard let container = sync.cloudContainer else { return }
         do {
-            guard let share = try await sync.fetchShare(for: library) else { return }
+            guard let share = try await sync.ensureLinkSharing(library) else { return }
             choirName = sync.choir(library)?.name ?? "Choir Library"
             self.library = library
             let controller = UICloudSharingController(share: share, container: container)
-            // Members read only by default; the owner can make any of them an editor.
-            controller.availablePermissions = [.allowPrivate, .allowReadOnly, .allowReadWrite]
+            // Always "Anyone with the link can view": no matching of invitees'
+            // Apple Account emails, and nobody but the owner can change anything.
+            controller.availablePermissions = [.allowPublic, .allowReadOnly]
             controller.delegate = self
             guard let presenter = Self.topViewController() else { return }
             if let popover = controller.popoverPresentationController {
@@ -160,7 +177,7 @@ final class ChoirSharingPresenter: NSObject, UICloudSharingControllerDelegate {
             let zoneID = CloudLibrary.location(of: library).zoneID
             let share = CKShare(recordZoneID: zoneID)
             share[CKShare.SystemFieldKey.title] = choirName
-            share.publicPermission = .none
+            share.publicPermission = .readOnly
             _ = try? await container.privateCloudDatabase.modifyRecords(saving: [share], deleting: [])
             await sync.refreshChoirDetails(library)
         }
