@@ -212,7 +212,7 @@ struct SyncSettingsView: View {
                 Button {
                     Task { await ChoirSharingPresenter.shared.present(library: choir.id) }
                 } label: {
-                    Label("Invite and Manage People", systemImage: "person.crop.circle.badge.plus")
+                    Label("Share Link and Manage People", systemImage: "person.crop.circle.badge.plus")
                 }
                 Button {
                     renameText = choir.name
@@ -242,7 +242,7 @@ struct SyncSettingsView: View {
         } header: {
             Text("Your Choir Library")
         } footer: {
-            Text("Share music and lists such as \"Evensong – Advent Sunday\" with your choir. Everyone keeps a full copy for rehearsal. In \"Invite and Manage People\", choose \"Can make changes\" for editors (for example a deputy); everyone else can only view. Annotations always stay private to each person. Hosting needs Pro; joining is free.")
+            Text("Share music and lists such as \"Evensong – Advent Sunday\" with your choir. Everyone keeps a full copy for rehearsal. Anyone you send the link to can join and view; only you can change the music and lists. Annotations always stay private to each person. Hosting needs Pro; joining is free.")
         }
     }
 

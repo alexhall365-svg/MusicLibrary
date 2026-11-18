@@ -4,8 +4,7 @@
 - **Create it:** open **iCloud & Choir** (sidebar → Tools) → **Create Choir Library**. Hosting needs Pro.
 - **Add music:** touch and hold any score → **Add to *your choir***. Or add your own scores to a choir list: they join the Choir Library automatically. New imports always go into your own library first.
 - **Make lists:** in the choir's sidebar section, tap **New Choir List**, e.g. "Evensong – Advent Sunday" or "Christmas season 2026". Add scores and drag them into order. Everyone sees the same order.
-- **Invite people:** **iCloud & Choir** → **Invite and Manage People**. Send the link by Messages or Mail.
-- **Editors:** in the same screen, tap a person and choose **Can make changes**. Editors can add, remove, reorder and edit details. Everyone else can only view.
+- **Invite people:** **iCloud & Choir** → **Share Link and Manage People** → **Copy Link**, and send it by Messages, WhatsApp or Mail. Anyone with the link can join and view (no need to match email addresses). Only you can change the music and lists.
 - **Remove music:** touch and hold a choir score → **Remove from Choir…**. It's removed from every member's devices (with their annotations on it). As the owner you can keep your own copy.
 - **Storage:** the choir's PDFs count against your iCloud storage (5 GB free). **iCloud & Choir** shows how much you use.
 

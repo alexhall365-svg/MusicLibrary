@@ -936,7 +936,12 @@ extension CloudSync {
             let shareID = CKRecord.ID(recordName: CKRecordNameZoneWideShare, zoneID: location.zoneID)
             do {
                 let record = try await database.record(for: shareID)
-                if let share = record as? CKShare { updateChoir(info.id, from: share) }
+                if let share = record as? CKShare {
+                    updateChoir(info.id, from: share)
+                    if info.isOwner && share.publicPermission != .readOnly {
+                        _ = try? await ensureLinkSharing(info.id)
+                    }
+                }
             } catch let error as CKError where error.code == .unknownItem || error.code == .zoneNotFound {
                 if location.scope == .shared {
                     removeLibraryLocally(info.id)
