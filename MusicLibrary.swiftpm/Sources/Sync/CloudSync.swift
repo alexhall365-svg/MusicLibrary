@@ -186,8 +186,8 @@ final class CloudSync {
                     await self.refreshAccountStatus()
                     // Push notifications normally announce changes; fetching on
                     // return also covers any that were missed.
-                    try? await self.privateEngine?.fetchChanges()
-                    try? await self.sharedEngine?.fetchChanges()
+                    Self.fetchDetached(self.privateEngine)
+                    Self.fetchDetached(self.sharedEngine)
                 }
             }
         })
@@ -224,7 +224,7 @@ final class CloudSync {
         note("Sync Now")
         for engine in [privateEngine, sharedEngine].compactMap({ $0 }) {
             do {
-                try await engine.fetchChanges()
+                try await Task.detached { try await engine.fetchChanges() }.value
             } catch {
                 report(error)
             }
@@ -232,7 +232,7 @@ final class CloudSync {
         scan()
         for engine in [privateEngine, sharedEngine].compactMap({ $0 }) {
             do {
-                try await engine.sendChanges()
+                try await Task.detached { try await engine.sendChanges() }.value
             } catch {
                 report(error)
             }
@@ -339,6 +339,14 @@ final class CloudSync {
     /// Counts PDFs as they arrive, for the progress banner.
     func countReceived(_ count: Int) {
         if count > 0 { pdfsReceived += count }
+    }
+
+    /// Starts a fetch outside any sync-engine callback. CKSyncEngine deliberately
+    /// crashes the app if fetchChanges/sendChanges is called from inside one of
+    /// its own delegate callbacks, even through a plain Task, so always detach.
+    nonisolated static func fetchDetached(_ engine: CKSyncEngine?) {
+        guard let engine else { return }
+        Task.detached { try? await engine.fetchChanges() }
     }
 
     // MARK: - Log and details
@@ -478,7 +486,8 @@ final class CloudSync {
     }
 
     func fetchShared() async {
-        try? await sharedEngine?.fetchChanges()
+        guard let engine = sharedEngine else { return }
+        _ = try? await Task.detached { try await engine.fetchChanges() }.value
     }
 
     // MARK: - Space used
@@ -800,8 +809,9 @@ extension CloudSync {
             if scope == .private { resetSyncState(keepEngines: true) }
             // The first-download marker was just cleared: download again so
             // uploads can start (they wait for one complete download).
-            let engine = self.engine(for: scope)
-            Task { try? await engine?.fetchChanges() }
+            // Must be detached: CKSyncEngine stops the app if a fetch is
+            // started from inside one of its own callbacks (like this one).
+            Self.fetchDetached(self.engine(for: scope))
         case .signOut, .switchAccounts:
             // Your own library stays on the device. Choir music you received
             // through the old account is removed, as it was shared with that account.
