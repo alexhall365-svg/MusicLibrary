@@ -4,9 +4,19 @@ name: Screenshots
 # screenshots of the main screens (useful for checking layouts and for the App
 # Store). Run from the Actions tab or ask Claude; download "screenshots" from
 # the run's Artifacts.
+#
+# With "real music" on, the library uses real public-domain scores from the
+# Mutopia Project (Screenshots/demo-library.json) instead of drawn pages.
+# Simulators used: iPhone Pro Max (1320x2868) and iPad Pro 13" (2064x2752),
+# which are the sizes App Store Connect asks for.
 
 on:
   workflow_dispatch:
+    inputs:
+      real_music:
+        description: "Use real public-domain scores (Mutopia Project)"
+        type: boolean
+        default: true
 
 # The workflow token can only read the code.
 permissions:
@@ -43,6 +53,26 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             -quiet 2>&1 | tee build.log
 
+      - name: Download real scores
+        if: ${{ inputs.real_music }}
+        run: |
+          mkdir -p demo
+          cp Screenshots/demo-library.json demo/manifest.json
+          python3 - <<'PY'
+          import json, os, urllib.request
+          m = json.load(open("Screenshots/demo-library.json"))
+          for s in m["scores"]:
+              url = m["base"] + s["path"]
+              dest = os.path.join("demo", os.path.basename(s["path"]))
+              urllib.request.urlretrieve(url, dest)
+              with open(dest, "rb") as f:
+                  data = f.read()
+              assert data[:4] == b"%PDF", f"not a PDF: {url}"
+              # Each piece in the list was checked to be public domain on Mutopia.
+              print("downloaded", url)
+          PY
+          ls -la demo
+
       - name: Take screenshots
         run: |
           APP=build/sim/Build/Products/Debug-iphonesimulator/MusicLibrary.app
@@ -75,6 +105,11 @@ jobs:
             xcrun simctl ui "$UDID" appearance light || true
             xcrun simctl status_bar "$UDID" override --time 9:41 --batteryState charged --batteryLevel 100 --wifiBars 3 || true
             xcrun simctl install "$UDID" "$APP"
+            if [ -d demo ]; then
+              DATA=$(xcrun simctl get_app_container "$UDID" "$BUNDLE" data)
+              mkdir -p "$DATA/Library/Application Support/MusicLibrary/DemoScores"
+              cp demo/* "$DATA/Library/Application Support/MusicLibrary/DemoScores/"
+            fi
             for screen in library select delete reader setlist editor labelling duplicates paywall; do
               xcrun simctl terminate "$UDID" "$BUNDLE" 2>/dev/null || true
               xcrun simctl launch "$UDID" "$BUNDLE" -demoLibrary YES -demoScreen "$screen"

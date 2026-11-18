@@ -1,0 +1,27 @@
+{
+  "source": "Mutopia Project (www.mutopiaproject.org). Every piece listed here is marked Public Domain by Mutopia.",
+  "base": "https://www.mutopiaproject.org/ftp/",
+  "scores": [
+    { "path": "TallisT/tallis-love/tallis-love-a4.pdf", "title": "If ye love me", "composer": "Tallis, Thomas", "catalogue": "", "scoring": "SATB", "key": "F major", "genre": "Anthem", "tags": ["Pentecost"], "recent": true },
+    { "path": "BachJS/BWV230/bach_BWV_230_Lobet_den_Herrn_alle_Heiden/bach_BWV_230_Lobet_den_Herrn_alle_Heiden-a4.pdf", "title": "Lobet den Herrn, alle Heiden", "composer": "Bach, Johann Sebastian", "catalogue": "BWV 230", "scoring": "SATB + continuo", "key": "C major", "genre": "Motet", "tags": ["German"], "recent": true },
+    { "path": "Anonymous/es_ist_ein_ros_entsprungen/es_ist_ein_ros_entsprungen-a4.pdf", "title": "Es ist ein Ros' entsprungen", "composer": "Praetorius, Michael", "catalogue": "", "scoring": "SATB", "key": "F major", "genre": "Carol", "tags": ["Christmas", "German"], "annotate": true },
+    { "path": "Anonymous/GoodKingWenceslas/GoodKingWenceslas-a4.pdf", "title": "Good King Wenceslas", "composer": "Traditional", "catalogue": "", "scoring": "SATB", "key": "", "genre": "Carol", "tags": ["Christmas"] },
+    { "path": "AdamA/minuit_chretiens/minuit_chretiens-a4.pdf", "title": "Minuit, chrétiens (O Holy Night)", "composer": "Adam, Adolphe", "catalogue": "", "scoring": "Voice + piano", "key": "", "genre": "Carol", "tags": ["Christmas", "French"] },
+    { "path": "BachJS/BWV606/bwv606/bwv606-a4.pdf", "title": "Vom Himmel hoch, da komm' ich her", "composer": "Bach, Johann Sebastian", "catalogue": "BWV 606", "scoring": "Organ", "key": "D major", "genre": "Chorale Prelude", "tags": ["Christmas"] },
+    { "path": "SchubertF/D962/SchubertF-D962-TantumErgo/SchubertF-D962-TantumErgo-a4.pdf", "title": "Tantum ergo in E-flat", "composer": "Schubert, Franz", "catalogue": "D 962", "scoring": "SATB + orchestra", "key": "E-flat major", "genre": "Hymn", "tags": ["Latin"] },
+    { "path": "BachJS/BWV610/bwv610/bwv610-a4.pdf", "title": "Jesu, meine Freude", "composer": "Bach, Johann Sebastian", "catalogue": "BWV 610", "scoring": "Organ", "key": "C minor", "genre": "Chorale Prelude", "tags": ["Lent"], "recent": true },
+    { "path": "BachJS/BWV565/ToccataFugue/ToccataFugue-a4.pdf", "title": "Toccata and Fugue in D minor", "composer": "Bach, Johann Sebastian", "catalogue": "BWV 565", "scoring": "Organ", "key": "D minor", "genre": "Toccata", "tags": [] },
+    { "path": "SchubertF/D706/SchubertF-D706-Psalm23/SchubertF-D706-Psalm23-a4.pdf", "title": "Psalm 23", "composer": "Schubert, Franz", "catalogue": "D 706", "scoring": "SSAA + piano", "key": "", "genre": "Psalm", "tags": ["German"] },
+    { "path": "PurcellH/FairestIsle/FairestIsle-a4.pdf", "title": "Fairest Isle", "composer": "Purcell, Henry", "catalogue": "Z. 628", "scoring": "SATB", "key": "", "genre": "Song", "tags": [] },
+    { "path": "FaureG/O7/apres/apres-a4.pdf", "title": "Après un rêve", "composer": "Fauré, Gabriel", "catalogue": "Op. 7 No. 1", "scoring": "Voice + piano", "key": "C minor", "genre": "Song", "tags": ["French"], "uncertain": true },
+    { "path": "BachJS/BWV208/Sheep/Sheep-a4.pdf", "title": "Sheep may safely graze", "composer": "Bach, Johann Sebastian", "catalogue": "BWV 208", "scoring": "Soprano, 2 flutes + continuo", "key": "B-flat major", "genre": "Aria", "tags": ["Wedding"] },
+    { "path": "MozartWA/KV183/Symphony25_1/Symphony25_1-a4.pdf", "title": "Symphony No. 25 in G minor: I. Allegro con brio", "composer": "Mozart, Wolfgang Amadeus", "catalogue": "K. 183", "scoring": "Orchestra", "key": "G minor", "genre": "Symphony", "tags": [] },
+    { "path": "HandelGF/BWV351/LaRej/LaRej-a4.pdf", "title": "La Réjouissance (Music for the Royal Fireworks)", "composer": "Handel, George Frideric", "catalogue": "HWV 351", "scoring": "Trumpet + organ", "key": "D major", "genre": "Suite", "tags": ["Wedding"] },
+    { "path": "JanequinC/Oyseaux-Endfassung/Oyseaux-Endfassung-a4.pdf", "title": "Le chant des oiseaux", "composer": "Janequin, Clément", "catalogue": "", "scoring": "SATB", "key": "", "genre": "Chanson", "tags": ["French"] },
+    { "path": "BeethovenLv/ode/ode-a4.pdf", "title": "", "composer": "", "catalogue": "", "scoring": "", "key": "", "genre": "", "tags": [], "fileName": "Scan 0042.pdf" }
+  ],
+  "setlists": [
+    { "name": "Christmas 2026", "scores": [3, 2, 5, 4, 6] },
+    { "name": "Evensong – Pentecost", "scores": [7, 0, 1, 8] }
+  ]
+}
