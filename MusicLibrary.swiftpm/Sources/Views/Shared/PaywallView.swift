@@ -41,7 +41,12 @@ struct PaywallView: View {
                     .padding()
                     .background(Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
 
-                    if !pro.isPro {
+                    if !pro.isPro && pro.isBeta {
+                        Text("Pro isn't available in the test version. Everything else works as normal.")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                    } else if !pro.isPro {
                         Button {
                             Task { await pro.purchase() }
                         } label: {

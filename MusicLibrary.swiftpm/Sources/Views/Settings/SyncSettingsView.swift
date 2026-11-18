@@ -7,6 +7,7 @@ struct SyncSettingsView: View {
     @Environment(AppState.self) private var appState
     @Environment(CloudSync.self) private var sync
     @State private var bytesUsed: Int64 = 0
+    @State private var counts: (here: Int, inICloud: Int) = (0, 0)
     @State private var showingCreate = false
     @State private var newChoirName = ""
     @State private var isWorking = false
@@ -59,6 +60,7 @@ struct SyncSettingsView: View {
                     }
 
                     if sync.isEnabled {
+                        detailsSection
                         hostedSection
                         if !sync.joinedChoirs.isEmpty { joinedSection }
                     }
@@ -71,7 +73,13 @@ struct SyncSettingsView: View {
                     Button("Done") { dismiss() }
                 }
             }
-            .task { bytesUsed = sync.iCloudBytesUsed() }
+            .task {
+                _ = await sync.currentUserID()
+                bytesUsed = sync.iCloudBytesUsed()
+                counts = sync.personalScoreCounts()
+            }
+            .onChange(of: sync.pendingChanges) { _, _ in counts = sync.personalScoreCounts() }
+            .onChange(of: sync.isFetching) { _, _ in counts = sync.personalScoreCounts() }
             .sheet(isPresented: $showingPaywall) { PaywallView() }
             .alert("New Choir Library", isPresented: $showingCreate) {
                 TextField("Choir name", text: $newChoirName)
@@ -134,7 +142,7 @@ struct SyncSettingsView: View {
             Spacer()
             if sync.isFetching || sync.isSending {
                 ProgressView()
-            } else if sync.pendingChanges == 0 && sync.accountStatus == .available {
+            } else if isUpToDate {
                 Image(systemName: "checkmark.icloud")
                     .foregroundStyle(.green)
             }
@@ -150,14 +158,48 @@ struct SyncSettingsView: View {
         case .temporarilyUnavailable: return "iCloud is temporarily unavailable"
         default: break
         }
-        if sync.isFetching { return "Checking for changes…" }
+        if sync.isFetching { return "Checking iCloud for changes…" }
+        if sync.problem != nil { return "Not syncing: see the message below" }
         if sync.pendingChanges > 0 {
             return "\(sync.pendingChanges) change\(sync.pendingChanges == 1 ? "" : "s") to upload"
+        }
+        if !sync.hasDownloadedOnce { return "Waiting for the first check with iCloud" }
+        if counts.inICloud < counts.here {
+            return "\(counts.here - counts.inICloud) scores not uploaded yet. Tap Sync Now"
         }
         if let last = sync.lastSync {
             return "Up to date · \(last.formatted(.relative(presentation: .named)))"
         }
         return "Waiting to sync"
+    }
+
+    private var isUpToDate: Bool {
+        sync.pendingChanges == 0 && sync.accountStatus == .available && sync.problem == nil
+            && sync.hasDownloadedOnce && counts.inICloud >= counts.here
+    }
+
+    private var detailsSection: some View {
+        Section("Sync Details") {
+            LabeledContent("Your scores on this device", value: "\(counts.here)")
+            LabeledContent("Of those, in iCloud", value: "\(counts.inICloud)")
+            if counts.here > 0 && counts.inICloud < counts.here {
+                ProgressView(value: Double(counts.inICloud), total: Double(counts.here))
+            }
+            LabeledContent("Waiting to upload", value: "\(sync.pendingChanges)")
+            NavigationLink("Sync Log") { SyncLogView() }
+            if let id = sync.userID {
+                LabeledContent("Your iCloud ID") {
+                    Button {
+                        UIPasteboard.general.string = id
+                    } label: {
+                        Label(String(id.prefix(12)) + "…", systemImage: "doc.on.doc")
+                            .labelStyle(.titleAndIcon)
+                            .font(.caption.monospaced())
+                    }
+                    .accessibilityLabel("Copy your iCloud ID")
+                }
+            }
+        }
     }
 
     @ViewBuilder
@@ -265,5 +307,84 @@ struct SyncStatusIcon: View {
             }
         }
         .accessibilityLabel("iCloud and Choir")
+    }
+}
+
+/// Recent sync activity, to copy and send when something isn't syncing.
+struct SyncLogView: View {
+    @Environment(CloudSync.self) private var sync
+
+    var body: some View {
+        let text = sync.log.joined(separator: "\n")
+        ScrollView {
+            Text(text.isEmpty ? "Nothing logged yet." : text)
+                .font(.caption.monospaced())
+                .textSelection(.enabled)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding()
+        }
+        .navigationTitle("Sync Log")
+        .toolbar {
+            ToolbarItemGroup(placement: .primaryAction) {
+                Button("Copy", systemImage: "doc.on.doc") {
+                    UIPasteboard.general.string = "\(AppConfig.displayName) \(AppConfig.version) on \(UIDevice.current.model)\n" + text
+                }
+                ShareLink(item: text)
+                Button("Clear", systemImage: "trash", role: .destructive) { sync.clearLog() }
+            }
+        }
+    }
+}
+
+/// A small banner showing uploads and downloads while they run, so a long
+/// first sync doesn't look stuck.
+struct SyncProgressBanner: View {
+    @Environment(CloudSync.self) private var sync
+
+    private var uploading: Bool {
+        sync.isEnabled && sync.hasDownloadedOnce && sync.pendingChanges > 0
+            && sync.scoresInICloud < sync.scoresHere
+    }
+
+    private var downloading: Bool {
+        sync.isEnabled && sync.isFetching && sync.pdfsReceived > 0
+    }
+
+    var body: some View {
+        Group {
+            if uploading {
+                banner(icon: "icloud.and.arrow.up") {
+                    Text("Uploading to iCloud: \(sync.scoresInICloud) of \(sync.scoresHere) scores")
+                        .font(.footnote.weight(.semibold))
+                        .monospacedDigit()
+                    ProgressView(value: Double(sync.scoresInICloud), total: Double(max(sync.scoresHere, 1)))
+                        .frame(width: 200)
+                }
+            } else if downloading {
+                banner(icon: "icloud.and.arrow.down") {
+                    Text("Downloading from iCloud: \(sync.pdfsReceived) score\(sync.pdfsReceived == 1 ? "" : "s") received")
+                        .font(.footnote.weight(.semibold))
+                        .monospacedDigit()
+                    ProgressView()
+                        .progressViewStyle(.linear)
+                        .frame(width: 200)
+                }
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: uploading)
+        .animation(.easeInOut(duration: 0.2), value: downloading)
+    }
+
+    private func banner<Content: View>(icon: String, @ViewBuilder content: () -> Content) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .foregroundStyle(Color.accentColor)
+            VStack(alignment: .leading, spacing: 4) { content() }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(.regularMaterial, in: Capsule())
+        .shadow(color: .black.opacity(0.15), radius: 8, y: 2)
+        .accessibilityElement(children: .combine)
     }
 }

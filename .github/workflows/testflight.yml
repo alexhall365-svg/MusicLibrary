@@ -6,6 +6,7 @@ name: TestFlight
 #
 # One-off setup (see docs/app-store-setup.md):
 #   Repository variables: APP_BUNDLE_ID, APPLE_TEAM_ID (optional: APP_DISPLAY_NAME,
+#                         PRO_OWNERS = iCloud IDs that always get Pro, comma-separated,
 #                         CLOUDKIT_CONTAINER, ICLOUD_SYNC=off to build without iCloud)
 #   Repository secrets:   ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8
 # iCloud sync needs the one-off steps in docs/icloud-setup.md.
@@ -14,15 +15,23 @@ on:
   workflow_dispatch:
     inputs:
       testers_get_pro:
-        description: "Pro unlocked for TestFlight testers (untick for an App Store submission build)"
+        description: "Give every tester Pro (leave unticked: only the owners in PRO_OWNERS get Pro)"
         type: boolean
-        default: true
+        default: false
+      for_app_review:
+        description: "Build to submit to the App Store (lets App Review make a test purchase)"
+        type: boolean
+        default: false
   schedule:
     - cron: "17 4 1 * *"
 
 concurrency:
   group: testflight
   cancel-in-progress: false
+
+# The workflow token can only read the code.
+permissions:
+  contents: read
 
 jobs:
   upload:
@@ -34,6 +43,7 @@ jobs:
       TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
       CLOUDKIT_CONTAINER: ${{ vars.CLOUDKIT_CONTAINER || format('iCloud.{0}', vars.APP_BUNDLE_ID) }}
       ICLOUD_SYNC: ${{ vars.ICLOUD_SYNC || 'on' }}
+      PRO_OWNERS: ${{ vars.PRO_OWNERS }}
       ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
       ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
     steps:
@@ -74,13 +84,20 @@ jobs:
           printf '%s\n' "$ASC_KEY_P8" > "$RUNNER_TEMP/keys/AuthKey_$ASC_KEY_ID.p8"
           echo "ASC_KEY_PATH=$RUNNER_TEMP/keys/AuthKey_$ASC_KEY_ID.p8" >> "$GITHUB_ENV"
           echo "BUILD_NUMBER=$(( ${{ github.run_number }} + 100 ))" >> "$GITHUB_ENV"
-          # Scheduled runs have no inputs: keep Pro on for testers.
-          if [ "${{ inputs.testers_get_pro }}" = "false" ]; then
-            echo "PRO_FLAG=" >> "$GITHUB_ENV"
-            echo "Building for App Store submission: Pro must be purchased."
-          else
+          # Scheduled runs have no inputs: testers don't get Pro.
+          if [ "${{ inputs.testers_get_pro }}" = "true" ]; then
             echo "PRO_FLAG=TESTFLIGHT_PRO" >> "$GITHUB_ENV"
-            echo "Building for testers: Pro unlocked."
+            echo "Building with Pro unlocked for every tester."
+          else
+            echo "PRO_FLAG=" >> "$GITHUB_ENV"
+            echo "Pro only for owners: ${PRO_OWNERS:-(none set yet)}."
+          fi
+          if [ "${{ inputs.for_app_review }}" = "true" ]; then
+            echo "BLOCK_TEST_PURCHASES=NO" >> "$GITHUB_ENV"
+            echo "App Store submission build: test purchases allowed for App Review."
+          else
+            echo "BLOCK_TEST_PURCHASES=YES" >> "$GITHUB_ENV"
+            echo "Testers can't buy Pro (test purchases blocked)."
           fi
           if [ "$ICLOUD_SYNC" = "off" ]; then
             echo "CLOUD_SYNC=NO" >> "$GITHUB_ENV"
@@ -109,6 +126,8 @@ jobs:
             SWIFT_ACTIVE_COMPILATION_CONDITIONS="$PRO_FLAG" \
             CLOUD_SYNC="$CLOUD_SYNC" \
             CLOUDKIT_CONTAINER_ID="$CLOUDKIT_CONTAINER" \
+            PRO_OWNERS="$PRO_OWNERS" \
+            BLOCK_TEST_PURCHASES="$BLOCK_TEST_PURCHASES" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \

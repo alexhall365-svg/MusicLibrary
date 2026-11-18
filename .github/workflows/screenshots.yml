@@ -8,6 +8,10 @@ name: Screenshots
 on:
   workflow_dispatch:
 
+# The workflow token can only read the code.
+permissions:
+  contents: read
+
 jobs:
   screenshots:
     runs-on: macos-15

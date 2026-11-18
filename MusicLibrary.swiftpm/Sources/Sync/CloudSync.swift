@@ -50,6 +50,16 @@ final class CloudSync {
     /// A problem worth showing (iCloud full, signed out…).
     var problem: String?
     private(set) var choirs: [ChoirInfo] = []
+    /// Your own scores on this device, and how many of their PDFs are in iCloud.
+    private(set) var scoresHere = 0
+    private(set) var scoresInICloud = 0
+    /// PDFs received during the current check with iCloud.
+    private(set) var pdfsReceived = 0
+    /// See `currentUserID()`.
+    private(set) var userID: String?
+
+    /// Recent sync activity, newest last, for "Sync Log" in Settings.
+    private(set) var log: [String] = []
 
     var hostedChoir: ChoirInfo? { choirs.first { $0.isOwner } }
     var joinedChoirs: [ChoirInfo] { choirs.filter { !$0.isOwner } }
@@ -91,6 +101,7 @@ final class CloudSync {
     private enum FileNames {
         static let ledger = "ledger.json"
         static let choirs = "choirs.json"
+        static let log = "log.json"
         static func engine(_ scope: CKDatabase.Scope) -> String { "engine-\(scope == .shared ? "shared" : "private").json" }
     }
 
@@ -115,6 +126,7 @@ final class CloudSync {
         self.modelContainer = modelContainer
         ledger = files.load(SyncLedger.self, from: FileNames.ledger) ?? SyncLedger()
         choirs = files.load([ChoirInfo].self, from: FileNames.choirs) ?? []
+        log = files.load([String].self, from: FileNames.log) ?? []
         guard isSupported, let containerIdentifier else { return }
         container = CKContainer(identifier: containerIdentifier)
         observeChanges()
@@ -123,6 +135,7 @@ final class CloudSync {
 
     private func start() {
         guard isSupported, let container, privateEngine == nil else { return }
+        note("Starting sync (container \(container.containerIdentifier ?? "?"), \(ledger.entries.count) records known)")
         privateEngine = makeEngine(database: container.privateCloudDatabase)
         sharedEngine = makeEngine(database: container.sharedCloudDatabase)
         privateEngine?.state.add(pendingDatabaseChanges: [.saveZone(CKRecordZone(zoneName: CloudLibrary.personalZoneName))])
@@ -208,10 +221,17 @@ final class CloudSync {
     /// Fetches and sends now (the "Sync Now" button, and pull to refresh).
     func syncNow() async {
         guard isEnabled, privateEngine != nil else { return }
-        scan()
+        note("Sync Now")
         for engine in [privateEngine, sharedEngine].compactMap({ $0 }) {
             do {
                 try await engine.fetchChanges()
+            } catch {
+                report(error)
+            }
+        }
+        scan()
+        for engine in [privateEngine, sharedEngine].compactMap({ $0 }) {
+            do {
                 try await engine.sendChanges()
             } catch {
                 report(error)
@@ -240,9 +260,10 @@ final class CloudSync {
             !(self?.canEdit(library) ?? false)
         }
         var byScope: [CKDatabase.Scope: [CKSyncEngine.PendingRecordZoneChange]] = [:]
+        var waitingForFetch = 0
         for save in plan.saves {
             let location = CloudLibrary.location(of: save.library)
-            guard hasFetchedOnce(location.scope) else { continue }
+            guard hasFetchedOnce(location.scope) else { waitingForFetch += 1; continue }
             byScope[location.scope, default: []].append(
                 .saveRecord(CKRecord.ID(recordName: save.recordName, zoneID: location.zoneID)))
         }
@@ -257,6 +278,12 @@ final class CloudSync {
             let existing = Set(engine.state.pendingRecordZoneChanges)
             let new = changes.filter { !existing.contains($0) }
             if !new.isEmpty { engine.state.add(pendingRecordZoneChanges: new) }
+            if !new.isEmpty || !plan.isEmpty {
+                note("Check: \(local.count) items here, \(ledger.entries.count) in iCloud; queued \(new.count) new (\(changes.count) to send) for \(scope == .shared ? "shared" : "private")")
+            }
+        }
+        if waitingForFetch > 0 {
+            note("Check: \(waitingForFetch) items wait for the first download from iCloud before uploading")
         }
         updatePendingCount()
     }
@@ -301,8 +328,72 @@ final class CloudSync {
     }
 
     private func updatePendingCount() {
-        pendingChanges = [privateEngine, sharedEngine].compactMap { $0 }
+        let pending = [privateEngine, sharedEngine].compactMap { $0 }
             .reduce(0) { $0 + $1.state.pendingRecordZoneChanges.count }
+        if pendingChanges != pending { pendingChanges = pending }
+        let counts = personalScoreCounts()
+        if scoresHere != counts.here { scoresHere = counts.here }
+        if scoresInICloud != counts.inICloud { scoresInICloud = counts.inICloud }
+    }
+
+    /// Counts PDFs as they arrive, for the progress banner.
+    func countReceived(_ count: Int) {
+        if count > 0 { pdfsReceived += count }
+    }
+
+    // MARK: - Log and details
+
+    func note(_ line: String) {
+        let stamp = Date().formatted(.dateTime.day().month(.abbreviated).hour().minute().second())
+        log.append("\(stamp)  \(line)")
+        if log.count > 400 { log.removeFirst(log.count - 400) }
+        files.save(log, to: FileNames.log)
+    }
+
+    func clearLog() {
+        log = []
+        files.save(log, to: FileNames.log)
+    }
+
+    private func scopeName(_ scope: CKDatabase.Scope) -> String {
+        scope == .shared ? "Shared" : "Private"
+    }
+
+    static func describe(_ error: Error) -> String {
+        if let ckError = error as? CKError {
+            if ckError.code == .partialFailure, let first = ckError.partialErrorsByItemID?.values.first {
+                return "partial failure, e.g. " + describe(first)
+            }
+            return "CKError \(ckError.code.rawValue): \(ckError.localizedDescription)"
+        }
+        return error.localizedDescription
+    }
+
+    /// Your own scores on this device, and how many of them iCloud has.
+    func personalScoreCounts() -> (here: Int, inICloud: Int) {
+        guard let context = modelContainer?.mainContext else { return (0, 0) }
+        let scores = ((try? context.fetch(FetchDescriptor<Score>())) ?? []).filter(\.isPersonal)
+        let synced = scores.filter { ledger.entries[SyncRecordName.scoreFile($0.id)]?.library == nil
+            && ledger.entries[SyncRecordName.scoreFile($0.id)] != nil }
+        return (scores.count, synced.count)
+    }
+
+    var hasDownloadedOnce: Bool { hasFetchedOnce(.private) }
+
+    /// This person's iCloud ID for the app (stable across their devices; the
+    /// same Apple Account always has the same ID). Remembered for offline use.
+    func currentUserID() async -> String? {
+        let key = "sync.userID"
+        if let container {
+            if let id = try? await container.userRecordID().recordName {
+                UserDefaults.standard.set(id, forKey: key)
+                if userID != id { userID = id }
+                return id
+            }
+        }
+        let cached = UserDefaults.standard.string(forKey: key)
+        if userID != cached { userID = cached }
+        return cached
     }
 
     // MARK: - Permissions
@@ -353,6 +444,7 @@ final class CloudSync {
     // MARK: - Errors
 
     func report(_ error: Error) {
+        note("Error: \(Self.describe(error))")
         guard let ckError = error as? CKError else {
             problem = error.localizedDescription
             return
@@ -433,9 +525,11 @@ extension CloudSync: CKSyncEngineDelegate {
             }
 
         case .accountChange(let change):
+            note("\(scopeName(scope)): account change \(change.changeType)")
             handleAccountChange(change, scope: scope)
 
         case .fetchedDatabaseChanges(let changes):
+            note("\(scopeName(scope)): zones changed \(changes.modifications.map(\.zoneID.zoneName)), deleted \(changes.deletions.map(\.zoneID.zoneName))")
             for modification in changes.modifications {
                 zoneAppeared(modification.zoneID, scope: scope)
             }
@@ -444,20 +538,28 @@ extension CloudSync: CKSyncEngineDelegate {
             }
 
         case .fetchedRecordZoneChanges(let changes):
+            note("\(scopeName(scope)): received \(changes.modifications.count) changed, \(changes.deletions.count) deleted")
             applyFetched(changes, scope: scope)
 
         case .sentDatabaseChanges(let sent):
+            note("\(scopeName(scope)): zones saved \(sent.savedZones.map(\.zoneID.zoneName)), failed \(sent.failedZoneSaves.count)")
             for failure in sent.failedZoneSaves {
                 report(failure.error)
             }
 
         case .sentRecordZoneChanges(let sent):
+            note("\(scopeName(scope)): sent \(sent.savedRecords.count) saved, \(sent.failedRecordSaves.count) failed, \(sent.deletedRecordIDs.count) deleted")
+            for failure in sent.failedRecordSaves.prefix(3) {
+                note("  failed \(failure.record.recordType) \(failure.record.recordID.recordName.prefix(14)): \(Self.describe(failure.error))")
+            }
             handleSent(sent, scope: scope, engine: syncEngine)
 
         case .willFetchChanges:
             isFetching = true
+            pdfsReceived = 0
 
         case .didFetchChanges:
+            note("\(scopeName(scope)): finished checking iCloud")
             isFetching = false
             setFetchedOnce(scope, true)
             finishFetch()
@@ -696,6 +798,10 @@ extension CloudSync {
             // Nothing is known about this account yet: compare everything afresh.
             // Records already in iCloud are matched up by the first fetch.
             if scope == .private { resetSyncState(keepEngines: true) }
+            // The first-download marker was just cleared: download again so
+            // uploads can start (they wait for one complete download).
+            let engine = self.engine(for: scope)
+            Task { try? await engine?.fetchChanges() }
         case .signOut, .switchAccounts:
             // Your own library stays on the device. Choir music you received
             // through the old account is removed, as it was shared with that account.
