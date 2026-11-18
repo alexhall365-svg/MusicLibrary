@@ -1,4 +1,5 @@
 import SwiftUI
+import StoreKit
 import SwiftData
 
 enum SidebarItem: Hashable {
@@ -18,6 +19,12 @@ struct RootView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var selection: SidebarItem? = .allScores
     @State private var showingDemoPaywall = false
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    @Environment(\.requestReview) private var requestReview
+
+    /// On iPad the sidebar stays visible, so progress and busy messages are
+    /// centred over the content column rather than the whole screen.
+    private var overlaysInDetail: Bool { sizeClass == .regular }
 
     var body: some View {
         @Bindable var appState = appState
@@ -28,6 +35,7 @@ struct RootView: View {
                 detail
             }
             .id(selection)
+            .modifier(StatusOverlays(enabled: overlaysInDetail))
         }
         .fullScreenCover(item: $appState.readerRequest) { request in
             if request.scores.isEmpty {
@@ -55,17 +63,9 @@ struct RootView: View {
         } message: { alert in
             Text(alert.message)
         }
-        .overlay(alignment: .bottom) {
-            VStack(spacing: 8) {
-                SyncProgressBanner()
-                AutoLabelBanner(labeler: appState.autoLabeler)
-            }
-            .padding(.bottom, 12)
-        }
-        .overlay {
-            if let message = appState.busyMessage {
-                BusyOverlay(message: message)
-            }
+        .modifier(StatusOverlays(enabled: !overlaysInDetail))
+        .onChange(of: appState.readerRequest == nil) { _, closed in
+            if closed { askForRatingIfDue() }
         }
         .task {
             LibraryMaintenance.runIfNeeded(context: modelContext)
@@ -100,9 +100,53 @@ struct RootView: View {
         case .choir(let library):
             ScoreCollectionView(scope: .library(library))
         case .labelling:
-            ClaudeLabellingView()
+            AutoLabelView()
         case .duplicates:
             DuplicatesView()
+        }
+    }
+}
+
+/// Progress banners and the busy message, placed by `RootView`.
+private struct StatusOverlays: ViewModifier {
+    let enabled: Bool
+    @Environment(AppState.self) private var appState
+
+    func body(content: Content) -> some View {
+        content
+            .overlay(alignment: .bottom) {
+                if enabled {
+                    VStack(spacing: 8) {
+                        SyncProgressBanner()
+                        AutoLabelBanner(labeler: appState.autoLabeler)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 12)
+                }
+            }
+            .overlay {
+                if enabled, let message = appState.busyMessage {
+                    BusyOverlay(message: message)
+                }
+            }
+    }
+}
+
+extension RootView {
+    /// Asks for an App Store rating once per version, after someone has read
+    /// music in the app a few times (never mid-task: only as the reader closes).
+    /// iOS also limits how often the prompt can appear.
+    fileprivate func askForRatingIfDue() {
+        let defaults = UserDefaults.standard
+        let opens = defaults.integer(forKey: "rating.readerCloses") + 1
+        defaults.set(opens, forKey: "rating.readerCloses")
+        let askedVersion = defaults.string(forKey: "rating.askedVersion")
+        guard opens >= 8, askedVersion != AppConfig.version,
+              !UserDefaults.standard.bool(forKey: "demoLibrary") else { return }
+        defaults.set(AppConfig.version, forKey: "rating.askedVersion")
+        Task {
+            try? await Task.sleep(for: .seconds(1))
+            requestReview()
         }
     }
 }
@@ -140,8 +184,10 @@ struct AutoLabelBanner: View {
                         Text("Apple Intelligence: \(min(labeler.done + 1, labeler.total)) of \(labeler.total)")
                             .font(.footnote.weight(.semibold))
                             .monospacedDigit()
+                            .lineLimit(1)
+                            .fixedSize()
                         ProgressView(value: Double(labeler.done), total: Double(max(labeler.total, 1)))
-                            .frame(width: 180)
+                            .frame(minWidth: 180)
                     }
                     Button("Stop") { labeler.stop() }
                         .font(.footnote)

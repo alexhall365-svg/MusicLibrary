@@ -1,4 +1,4 @@
-# Setting up iCloud sync and the Choir Library
+# Setting up iCloud sync and shared groups
 
 One-off steps to turn on iCloud for TestFlight builds. Everything here works from **Safari on an iPad**; no Mac is needed. Allow about 30 minutes.
 
@@ -46,18 +46,18 @@ Run the **TestFlight** workflow as usual. It now:
 If it fails at "The signed app has no iCloud entitlement", recheck Step 2. To upload a build without iCloud meanwhile, add a repository **variable** `ICLOUD_SYNC` = `off`.
 
 ## Step 7: Test
-You need two Apple Accounts and two devices for the choir. In TestFlight, install the new build on each.
+You need two Apple Accounts and two devices for a group. In TestFlight, install the new build on each.
 
 **Your own devices (same Apple Account):**
-1. On the iPad, open **iCloud & Choir** (in the sidebar under Tools). Check **Sync with iCloud** is on and it says "Up to date". The first upload takes a while for a big library; leave the app open on Wi-Fi.
+1. On the iPad, open **iCloud & Groups** (in the sidebar under Tools). Check **Sync with iCloud** is on and it says "Up to date". The first upload takes a while for a big library; leave the app open on Wi-Fi.
 2. On the iPhone, open the app with the same Apple Account. Your scores, setlists and annotations arrive.
 3. Edit a score's details, reorder a setlist, draw on a page: each appears on the other device within a minute (bring the app to the front to fetch straight away, or pull down on the sidebar).
 
-**The choir (a second Apple Account):**
-1. On your device: **iCloud & Choir** → **Create Choir Library**, name it, then send the invitation by Messages or Mail. To make someone an editor (for example a deputy), choose **Can make changes** for them in Apple's sharing screen; everyone else should be **View only**.
-2. On the member's device: install the TestFlight build first, then tap the invitation. The choir appears in the sidebar under its name.
-3. On your device: touch and hold a score → **Add to *choir name***, or make a **New Choir List** in the choir's sidebar section and add scores to it. The member's device downloads the music and the list.
-4. Remove a score from the choir: it disappears from the member's device.
+**A shared group (a second Apple Account):**
+1. On your device: **iCloud & Groups** → **Create Shared Group**, name it, then **Copy Link** and send it by Messages, WhatsApp or email. Anyone with the link can join and view.
+2. On the member's device: install the TestFlight build first, then tap the invitation. The group appears in the sidebar under its name.
+3. On your device: touch and hold a score → **Add to *group name***, or make a **New Group List** in the group's sidebar section and add scores to it. The member's device downloads the music and the list.
+4. Remove a score from the group: it disappears from the member's device.
 
 TestFlight testers must be added in App Store Connect before they can install the app (TestFlight → Internal or External Testing).
 
@@ -65,10 +65,9 @@ TestFlight testers must be added in App Store Connect before they can install th
 | What you see | What to do |
 |---|---|
 | "Not signed in to iCloud" | Sign in under Settings → [your name] on the device |
-| Nothing syncs; status stays "Waiting to sync" | Check Steps 4–5 (schema deployed to Production). Open **iCloud & Choir** to see any error |
+| Nothing syncs; status stays "Waiting to sync" | Check Steps 4–5 (schema deployed to Production). Open **iCloud & Groups** to see any error |
 | Sharing says it **cannot create type cloudkit.share** | The **CloudKit Schema** workflow tries to add this system type. If its log shows a warning that it couldn't, sharing needs one share made in the Development environment first. Tell Claude: the fallback is a Development build installed on a registered device, which takes a few extra setup steps |
 | "Your iCloud storage is full" | Free space in Settings → [your name] → iCloud. Everything stays on the device meanwhile |
-| A member sees "View only" but should edit | In **iCloud & Choir** → **Invite and Manage People**, tap them and choose **Can make changes** |
 | The same score appears twice after first sync | Two devices imported the same PDF before syncing and one had different details. Use **Find Duplicates** |
 
 ## How it works (for reference)

@@ -42,6 +42,36 @@ struct AnnotationStore {
         return pages
     }
 
+    // MARK: Director's markings
+
+    /// The group owner's markings on a group score, as received by a member.
+    /// Read-only on the member's device; never uploaded from it.
+    /// Layout: Annotations/<score id>/director/page-<index>.drawing
+    func directorFileURL(scoreID: UUID, page: Int) -> URL {
+        paths.annotationsDirectory(for: scoreID)
+            .appendingPathComponent("director", isDirectory: true)
+            .appendingPathComponent("page-\(page).drawing")
+    }
+
+    func loadDirectorDrawing(scoreID: UUID, page: Int) -> PKDrawing {
+        guard let data = try? Data(contentsOf: directorFileURL(scoreID: scoreID, page: page)),
+              let drawing = try? PKDrawing(data: data) else {
+            return PKDrawing()
+        }
+        return drawing
+    }
+
+    func removeDirectorFile(scoreID: UUID, page: Int) {
+        try? FileManager.default.removeItem(at: directorFileURL(scoreID: scoreID, page: page))
+        Self.postRemoteChange(scoreID: scoreID, page: page)
+    }
+
+    /// Whether members see the director's markings (a setting in iCloud & Groups).
+    static let showDirectorKey = "groups.showDirectorMarkings"
+    static var showsDirectorMarkings: Bool {
+        UserDefaults.standard.object(forKey: showDirectorKey) as? Bool ?? true
+    }
+
     /// Deletes one page's annotations without announcing a local change.
     func removeFile(scoreID: UUID, page: Int) {
         try? FileManager.default.removeItem(at: fileURL(scoreID: scoreID, page: page))
@@ -79,7 +109,8 @@ struct AnnotationStore {
     func hasAnnotations(for scoreID: UUID) -> Bool {
         let contents = try? FileManager.default.contentsOfDirectory(
             at: paths.annotationsDirectory(for: scoreID), includingPropertiesForKeys: nil)
-        return !(contents ?? []).isEmpty
+        // Your own pages only (not a "director" folder of someone else's markings).
+        return (contents ?? []).contains { $0.pathExtension == "drawing" }
     }
 
     func deleteAll(for scoreID: UUID) {

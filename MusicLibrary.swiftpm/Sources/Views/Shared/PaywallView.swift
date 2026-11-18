@@ -31,12 +31,10 @@ struct PaywallView: View {
                     VStack(alignment: .leading, spacing: 16) {
                         feature("sparkles", "Auto-label with Apple Intelligence",
                                 "New imports fill in their own titles, composers and more, privately on your device.")
-                        feature("text.badge.checkmark", "Bulk labelling with Claude",
-                                "Label hundreds of scores at once and review every change.")
+                        feature("person.3", "Host a shared group",
+                                "Share music, lists and your markings with a choir, band or orchestra. Joining a group is always free.")
                         feature("doc.on.doc", "Find duplicates",
                                 "Spot copies by name, text or how the page looks, and tidy up safely.")
-                        feature("arrow.counterclockwise.icloud", "Backup and restore",
-                                "Coming soon, included at no extra cost.")
                     }
                     .padding()
                     .background(Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 16, style: .continuous))

@@ -19,6 +19,11 @@ final class ScorePageView: UIView, PKCanvasViewDelegate {
 
     private let imageView = UIImageView()
     private let canvasView = PKCanvasView()
+    /// The group director's markings (members only): shown under your own
+    /// annotations, and never editable here.
+    private let directorView = PKCanvasView()
+    private var directorDrawing = PKDrawing()
+    private var remoteObserver: NSObjectProtocol?
     private let store = AnnotationStore()
 
     private var renderer: PageRenderer?
@@ -48,10 +53,35 @@ final class ScorePageView: UIView, PKCanvasViewDelegate {
         canvasView.isUserInteractionEnabled = false
         // Keep ink colours true; PencilKit would otherwise invert them in dark mode.
         canvasView.overrideUserInterfaceStyle = .light
+        directorView.backgroundColor = .clear
+        directorView.isOpaque = false
+        directorView.isScrollEnabled = false
+        directorView.isUserInteractionEnabled = false
+        directorView.contentInsetAdjustmentBehavior = .never
+        directorView.overrideUserInterfaceStyle = .light
+        directorView.accessibilityElementsHidden = true
+        addSubview(directorView)
         addSubview(canvasView)
+
+        // Annotations that arrive from iCloud while the page is open.
+        remoteObserver = NotificationCenter.default.addObserver(
+            forName: AnnotationStore.remoteDidChange, object: nil, queue: .main
+        ) { [weak self] note in
+            let scoreID = note.object as? UUID
+            let page = note.userInfo?["page"] as? Int
+            MainActor.assumeIsolated {
+                guard let self, let renderer = self.renderer, scoreID == renderer.scoreID,
+                      page == self.pageIndex else { return }
+                self.reloadFromDisk()
+            }
+        }
 
         isAccessibilityElement = true
         accessibilityTraits = .image
+    }
+
+    deinit {
+        if let remoteObserver { NotificationCenter.default.removeObserver(remoteObserver) }
     }
 
     required init?(coder: NSCoder) {
@@ -66,6 +96,8 @@ final class ScorePageView: UIView, PKCanvasViewDelegate {
         imageView.image = nil
         requestedImageKey = nil
         pageDrawing = store.loadDrawing(scoreID: renderer.scoreID, page: pageIndex)
+        directorDrawing = AnnotationStore.showsDirectorMarkings
+            ? store.loadDirectorDrawing(scoreID: renderer.scoreID, page: pageIndex) : PKDrawing()
         displayScale = 0
         canvasView.undoManager?.removeAllActions()
         accessibilityLabel = "Page \(pageIndex + 1) of \(renderer.pageCount)"
@@ -86,6 +118,7 @@ final class ScorePageView: UIView, PKCanvasViewDelegate {
         let pageSize = renderer.pageSize(pageIndex)
         let rect = fittedRect(for: pageSize)
         imageView.frame = rect
+        directorView.frame = rect
         canvasView.frame = rect
 
         let scale = rect.width / max(pageSize.width, 1)
@@ -130,8 +163,22 @@ final class ScorePageView: UIView, PKCanvasViewDelegate {
     private func applyDrawing() {
         guard displayScale > 0 else { return }
         isApplyingDrawing = true
-        canvasView.drawing = pageDrawing.transformed(using: CGAffineTransform(scaleX: displayScale, y: displayScale))
+        let scale = CGAffineTransform(scaleX: displayScale, y: displayScale)
+        canvasView.drawing = pageDrawing.transformed(using: scale)
+        directorView.drawing = directorDrawing.transformed(using: scale)
         isApplyingDrawing = false
+    }
+
+    /// Picks up annotations synced from another device or the group director,
+    /// unless you're in the middle of drawing on this page.
+    private func reloadFromDisk() {
+        guard let renderer, pageIndex >= 0 else { return }
+        directorDrawing = AnnotationStore.showsDirectorMarkings
+            ? store.loadDirectorDrawing(scoreID: renderer.scoreID, page: pageIndex) : PKDrawing()
+        if saveWorkItem == nil && !canvasView.isUserInteractionEnabled {
+            pageDrawing = store.loadDrawing(scoreID: renderer.scoreID, page: pageIndex)
+        }
+        applyDrawing()
     }
 
     func canvasViewDrawingDidChange(_ canvasView: PKCanvasView) {

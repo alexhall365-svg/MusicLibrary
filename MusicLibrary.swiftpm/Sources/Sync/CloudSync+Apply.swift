@@ -36,8 +36,9 @@ extension CloudSync {
         for deletion in changes.deletions {
             let name = deletion.recordID.recordName
             let library = CloudLibrary.key(for: deletion.recordID.zoneID, scope: scope)
+            let key = Self.ledgerKey(recordName: name, library: library)
             // Ignore deletions of a copy that has since moved to another library.
-            guard let entry = ledger.entries[name], entry.library == library else {
+            guard let entry = ledger.entries[key], entry.library == library else {
                 if ledger.pendingScores[name]?.library == library {
                     ledger.pendingScores.removeValue(forKey: name)
                 }
@@ -55,8 +56,12 @@ extension CloudSync {
                     context.delete(setlist)
                 }
             case .annotation(let scoreID, let page):
-                ledger.entries.removeValue(forKey: name)
-                AnnotationStore().removeFile(scoreID: scoreID, page: page)
+                ledger.entries.removeValue(forKey: key)
+                if CloudLibrary.isJoined(library) {
+                    AnnotationStore().removeDirectorFile(scoreID: scoreID, page: page)
+                } else {
+                    AnnotationStore().removeFile(scoreID: scoreID, page: page)
+                }
             case nil:
                 break
             }
@@ -268,20 +273,35 @@ extension CloudSync {
     // MARK: - Annotations
 
     private func applyAnnotation(_ record: CKRecord, scoreID: UUID, page: Int, library: String?) {
-        guard library == nil, let asset = record["drawing"] as? CKAsset, let source = asset.fileURL else { return }
+        guard let asset = record["drawing"] as? CKAsset, let source = asset.fileURL else { return }
         let store = AnnotationStore()
-        let destination = store.fileURL(scoreID: scoreID, page: page)
+        // Your own annotations (your library, or a group you host) go in your
+        // own layer. From a group you joined, they're the director's markings:
+        // a separate, read-only layer.
+        let destination = CloudLibrary.isJoined(library)
+            ? store.directorFileURL(scoreID: scoreID, page: page)
+            : store.fileURL(scoreID: scoreID, page: page)
         try? FileManager.default.createDirectory(
             at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
         guard Self.copyReplacing(source, to: destination) else { return }
-        ledger.entries[record.recordID.recordName] = SyncLedger.Entry(
-            library: nil,
+        ledger.entries[Self.ledgerKey(recordName: record.recordID.recordName, library: library)] = SyncLedger.Entry(
+            library: library,
             fingerprint: SyncFingerprint.ofFile(at: destination) ?? "",
             systemFields: RecordArchive.systemFields(of: record))
         AnnotationStore.postRemoteChange(scoreID: scoreID, page: page)
     }
 
     // MARK: - Helpers
+
+    /// The ledger key for a record. The director's markings in a group you
+    /// joined use the same record names as your own private annotations on
+    /// that score, so they're kept under a separate key.
+    static func ledgerKey(recordName: String, library: String?) -> String {
+        if CloudLibrary.isJoined(library), case .annotation = SyncRecordName.parse(recordName) {
+            return "director/" + recordName
+        }
+        return recordName
+    }
 
     static func copyReplacing(_ source: URL, to destination: URL) -> Bool {
         let fileManager = FileManager.default

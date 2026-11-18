@@ -79,7 +79,7 @@ struct SidebarView: View {
                     showingSync = true
                 } label: {
                     Label {
-                        Text("iCloud & Choir")
+                        Text("iCloud & Groups")
                     } icon: {
                         SyncStatusIcon()
                     }
@@ -102,7 +102,7 @@ struct SidebarView: View {
         .sheet(isPresented: $showingPaywall) { PaywallView() }
         .sheet(isPresented: $showingSync) { SyncSettingsView() }
         .refreshable { await sync.syncNow() }
-        .alert("New Choir List", isPresented: Binding(
+        .alert("New Group List", isPresented: Binding(
             get: { newListLibrary != nil }, set: { if !$0 { newListLibrary = nil } })
         ) {
             TextField("Name", text: $newSetlistName)
@@ -115,7 +115,7 @@ struct SidebarView: View {
             }
             Button("Cancel", role: .cancel) { newListLibrary = nil }
         } message: {
-            Text("For example \"Evensong – Advent Sunday\" or \"Christmas season 2026\". Everyone in the choir gets it.")
+            Text("For example \"Evensong – Advent Sunday\" or \"Christmas season 2026\". Everyone in the group gets it.")
         }
         .alert("New Setlist", isPresented: $showingNewSetlist) {
             TextField("Name", text: $newSetlistName)
@@ -156,7 +156,7 @@ struct SidebarView: View {
             Button("Cancel", role: .cancel) { setlistToDelete = nil }
         } message: {
             if setlistToDelete?.cloudLibrary != nil {
-                Text("The list is removed for everyone in the choir. The music stays in the Choir Library.")
+                Text("The list is removed for everyone in the group. The music stays in the group.")
             } else {
                 Text("The scores stay in your library.")
             }
@@ -168,7 +168,7 @@ struct SidebarView: View {
         let canEdit = sync.canEdit(choir.id)
         Section {
             NavigationLink(value: SidebarItem.choir(choir.id)) {
-                Label("Choir Music", systemImage: "person.3")
+                Label("Group Music", systemImage: "person.3")
                     .badge(scores.filter { $0.cloudLibrary == choir.id }.count)
             }
             ForEach(setlists.filter { $0.cloudLibrary == choir.id }) { setlist in
@@ -197,7 +197,7 @@ struct SidebarView: View {
                     newSetlistName = ""
                     newListLibrary = choir.id
                 } label: {
-                    Label("New Choir List", systemImage: "plus")
+                    Label("New Group List", systemImage: "plus")
                 }
             }
         } header: {

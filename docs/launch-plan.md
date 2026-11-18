@@ -20,7 +20,7 @@ That's roughly **90% cheaper** than forScore in year one, and far cheaper than s
 
 **Free:** import, library, search and browse, reader, annotations, setlists, choir sharing (when built), and editing details by hand.
 
-**Pro (£3.99 once, for life):** Apple Intelligence auto-labelling, bulk labelling with Claude (export and import), Find Duplicates, and future bulk tools (backup and restore, batch edits).
+**Pro (£3.99 once, for life):** Apple Intelligence auto-labelling, hosting a shared group (choir, band or orchestra), Find Duplicates, and future tools (backup and restore, batch edits).
 
 ### The maths
 - £3.99 includes 20% VAT, which leaves £3.33. Apple then keeps 15% (Small Business Program), so **you receive about £2.83 per UK sale**. US sales ($3.99) come to roughly the same.

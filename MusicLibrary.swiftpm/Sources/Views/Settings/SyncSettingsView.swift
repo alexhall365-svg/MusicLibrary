@@ -1,13 +1,14 @@
 import SwiftUI
 import CloudKit
 
-/// "iCloud & Choir": sync with your own devices, and the Choir Library.
+/// "iCloud & Groups": sync with your own devices, and the Choir Library.
 struct SyncSettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AppState.self) private var appState
     @Environment(CloudSync.self) private var sync
     @State private var bytesUsed: Int64 = 0
     @State private var counts: (here: Int, inICloud: Int) = (0, 0)
+    @AppStorage(AnnotationStore.showDirectorKey) private var showDirectorMarkings = true
     @State private var showingCreate = false
     @State private var newChoirName = ""
     @State private var isWorking = false
@@ -24,7 +25,7 @@ struct SyncSettingsView: View {
             Form {
                 if !sync.isSupported {
                     Section {
-                        Label("iCloud sync and the Choir Library work in the TestFlight and App Store versions of \(AppConfig.displayName). This build (for example from Swift Playgrounds) keeps everything on this device.", systemImage: "icloud.slash")
+                        Label("iCloud sync and shared groups work in the TestFlight and App Store versions of \(AppConfig.displayName). This build (for example from Swift Playgrounds) keeps everything on this device.", systemImage: "icloud.slash")
                             .font(.callout)
                     }
                 } else {
@@ -56,7 +57,7 @@ struct SyncSettingsView: View {
                     Section {
                         LabeledContent("Your iCloud storage used", value: ByteCountFormatter.string(fromByteCount: bytesUsed, countStyle: .file))
                     } footer: {
-                        Text("Your library and any Choir Library you host count against your iCloud storage (5 GB free). Choirs you join use their owner's storage, not yours.")
+                        Text("Your library and any group you host count against your iCloud storage (5 GB free). Groups you join use their owner's storage, not yours.")
                     }
 
                     if sync.isEnabled {
@@ -66,7 +67,7 @@ struct SyncSettingsView: View {
                     }
                 }
             }
-            .navigationTitle("iCloud & Choir")
+            .navigationTitle("iCloud & Groups")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
@@ -81,17 +82,17 @@ struct SyncSettingsView: View {
             .onChange(of: sync.pendingChanges) { _, _ in counts = sync.personalScoreCounts() }
             .onChange(of: sync.isFetching) { _, _ in counts = sync.personalScoreCounts() }
             .sheet(isPresented: $showingPaywall) { PaywallView() }
-            .alert("New Choir Library", isPresented: $showingCreate) {
-                TextField("Choir name", text: $newChoirName)
+            .alert("New Shared Group", isPresented: $showingCreate) {
+                TextField("Group name", text: $newChoirName)
                 Button("Create") { createChoir() }
                 Button("Cancel", role: .cancel) {}
             } message: {
-                Text("For example \"St Mary's Choir\". You can then add music and lists, and invite the choir.")
+                Text("For example \"St Mary's Choir\" or \"City Brass Band\". You can then add music and lists, and share the link.")
             }
-            .alert("Rename Choir Library", isPresented: Binding(
+            .alert("Rename Group", isPresented: Binding(
                 get: { choirToRename != nil }, set: { if !$0 { choirToRename = nil } })
             ) {
-                TextField("Choir name", text: $renameText)
+                TextField("Group name", text: $renameText)
                 Button("Rename") {
                     if let choir = choirToRename { run { try await sync.renameChoir(choir.id, to: renameText) } }
                     choirToRename = nil
@@ -103,24 +104,24 @@ struct SyncSettingsView: View {
                 isPresented: Binding(get: { choirToDelete != nil }, set: { if !$0 { choirToDelete = nil } }),
                 titleVisibility: .visible
             ) {
-                Button("Delete Choir Library", role: .destructive) {
+                Button("Delete Group", role: .destructive) {
                     if let choir = choirToDelete { sync.deleteHostedChoir(choir.id) }
                     choirToDelete = nil
                 }
             } message: {
-                Text("The choir's music and lists are removed from every member's devices. You keep them: they move into your own library.")
+                Text("The group's music and lists are removed from every member's devices. You keep them: they move into your own library.")
             }
             .confirmationDialog(
                 "Leave \"\(choirToLeave?.name ?? "")\"?",
                 isPresented: Binding(get: { choirToLeave != nil }, set: { if !$0 { choirToLeave = nil } }),
                 titleVisibility: .visible
             ) {
-                Button("Leave Choir", role: .destructive) {
+                Button("Leave Group", role: .destructive) {
                     if let choir = choirToLeave { run { try await sync.leaveChoir(choir.id) } }
                     choirToLeave = nil
                 }
             } message: {
-                Text("The choir's music and your annotations on it are removed from your devices. Your own library isn't affected.")
+                Text("The group's music and your annotations on it are removed from your devices. Your own library isn't affected.")
             }
             .alert("Couldn't Complete", isPresented: Binding(
                 get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })
@@ -223,7 +224,7 @@ struct SyncSettingsView: View {
                 Button(role: .destructive) {
                     choirToDelete = choir
                 } label: {
-                    Label("Delete Choir Library", systemImage: "trash")
+                    Label("Delete Group", systemImage: "trash")
                 }
             } else {
                 Button {
@@ -234,20 +235,21 @@ struct SyncSettingsView: View {
                         showingPaywall = true
                     }
                 } label: {
-                    Label(appState.pro.isPro ? "Create Choir Library" : "Create Choir Library (Pro)",
+                    Label(appState.pro.isPro ? "Create Shared Group" : "Create Shared Group (Pro)",
                           systemImage: "person.3")
                 }
                 .disabled(sync.accountStatus != .available)
             }
         } header: {
-            Text("Your Choir Library")
+            Text("Your Shared Group")
         } footer: {
-            Text("Share music and lists such as \"Evensong – Advent Sunday\" with your choir. Everyone keeps a full copy for rehearsal. Anyone you send the link to can join and view; only you can change the music and lists. Annotations always stay private to each person. Hosting needs Pro; joining is free.")
+            Text("Share music and lists such as \"Evensong – Advent Sunday\" or \"Spring Concert\" with a choir, band or orchestra. Everyone keeps a full copy for rehearsal. Anyone you send the link to can join and view; only you can change the music and lists. Your markings on group music are shared with everyone as the director's markings; members' own markings stay private. Hosting needs Pro; joining is free.")
         }
     }
 
     private var joinedSection: some View {
-        Section("Choirs You've Joined") {
+        Section {
+            Toggle("Show Director's Markings", isOn: $showDirectorMarkings)
             ForEach(sync.joinedChoirs) { choir in
                 VStack(alignment: .leading, spacing: 2) {
                     Text(choir.name)
@@ -260,16 +262,20 @@ struct SyncSettingsView: View {
                     Button("Leave", role: .destructive) { choirToLeave = choir }
                 }
                 .contextMenu {
-                    Button("Leave Choir", systemImage: "rectangle.portrait.and.arrow.right", role: .destructive) {
+                    Button("Leave Group", systemImage: "rectangle.portrait.and.arrow.right", role: .destructive) {
                         choirToLeave = choir
                     }
                 }
             }
+        } header: {
+            Text("Groups You've Joined")
+        } footer: {
+            Text("The group's director (its owner) can mark up the music for everyone. Their markings appear under yours and can't be changed here. Your own markings stay private.")
         }
     }
 
     private func createChoir() {
-        let name = newChoirName.trimmed.isEmpty ? "Choir Library" : newChoirName.trimmed
+        let name = newChoirName.trimmed.isEmpty ? "Shared Group" : newChoirName.trimmed
         run {
             let choir = try await sync.createChoir(named: name)
             await ChoirSharingPresenter.shared.present(library: choir.id)
@@ -306,7 +312,7 @@ struct SyncStatusIcon: View {
                 Image(systemName: "checkmark.icloud")
             }
         }
-        .accessibilityLabel("iCloud and Choir")
+        .accessibilityLabel("iCloud and Groups")
     }
 }
 
@@ -357,6 +363,8 @@ struct SyncProgressBanner: View {
                     Text("Uploading to iCloud: \(sync.scoresInICloud) of \(sync.scoresHere) scores")
                         .font(.footnote.weight(.semibold))
                         .monospacedDigit()
+                        .lineLimit(1)
+                        .fixedSize()
                     ProgressView(value: Double(sync.scoresInICloud), total: Double(max(sync.scoresHere, 1)))
                         .frame(width: 200)
                 }
@@ -365,6 +373,8 @@ struct SyncProgressBanner: View {
                     Text("Downloading from iCloud: \(sync.pdfsReceived) score\(sync.pdfsReceived == 1 ? "" : "s") received")
                         .font(.footnote.weight(.semibold))
                         .monospacedDigit()
+                        .lineLimit(1)
+                        .fixedSize()
                     ProgressView()
                         .progressViewStyle(.linear)
                         .frame(width: 200)

@@ -1,6 +1,6 @@
 # Quire
 
-An iPad and iPhone app for cataloguing, annotating and performing from PDF sheet music, with Claude-assisted bulk labelling. The display name and bundle ID live in `Config/App.xcconfig` (and `MusicLibrary.swiftpm/Package.swift` for Swift Playgrounds); the project folders keep their original "MusicLibrary" names.
+An iPad and iPhone app for cataloguing, annotating and performing from PDF sheet music, with on-device Apple Intelligence labelling, iCloud sync and shared groups for choirs, bands and orchestras. The display name and bundle ID live in `Config/App.xcconfig` (and `MusicLibrary.swiftpm/Package.swift` for Swift Playgrounds); the project folders keep their original "MusicLibrary" names.
 
 ## What it does (version 0.1)
 
@@ -11,12 +11,12 @@ An iPad and iPhone app for cataloguing, annotating and performing from PDF sheet
 - **Setlists:** create, reorder and play straight through from one piece to the next.
 - **Find Duplicates:** groups scores that are the same file, have the same or a similar title, share the text on their first pages, or have a first page that looks the same. You pick which copies to delete; setlist entries move to the copy you keep, and you can mark a group "Not duplicates".
 - **Apple Intelligence (iPadOS 26, on device):** new imports are filled in automatically from the first pages of each score, and anything uncertain is marked "Check details" under Needs Details. You can relabel earlier imports from **Auto-Label** (with a review screen), from a score's long-press menu, or with **Fill In with Apple Intelligence** in its details.
-- **Label with Claude:** export scores with text read from their first pages (on-device OCR for scans), have Claude fill in the details, then paste or open Claude's reply. You review every change, with low-confidence fields highlighted, before it's saved. See [docs/claude-labelling.md](docs/claude-labelling.md).
+- **Shared groups:** share music, lists and the director's markings with a choir, band or orchestra by link. See [docs/group-guide.md](docs/group-guide.md).
 
 See [ROADMAP.md](ROADMAP.md) for what's next.
 
 ## Free and Pro
-Reading, annotating, the library, setlists and editing details are free. **Pro** (one-time in-app purchase, product ID `pro_unlock`, £3.99) unlocks Apple Intelligence labelling, Claude bulk labelling and Find Duplicates. Debug builds (Swift Playgrounds) always have Pro.
+Reading, annotating, the library, setlists and editing details are free. **Pro** (one-time in-app purchase, product ID `pro_unlock`, £3.99) unlocks Apple Intelligence labelling, hosting a shared group and Find Duplicates. Debug builds (Swift Playgrounds) always have Pro.
 
 ## Project layout
 
@@ -27,7 +27,7 @@ Reading, annotating, the library, setlists and editing details are free. **Pro**
 | `project.yml` | XcodeGen spec for CI and Mac builds, using the same sources. The Xcode project is generated, not committed. |
 | `Config/App.xcconfig` + `MusicLibrary.swiftpm/Package.swift` | App name, bundle ID and version (keep the two in step). |
 | `MusicLibraryTests/` | Unit tests: metadata model, file-name parsing, JSON exchange, matching, import, setlists |
-| `docs/` | Install guide, metadata schema, Claude labelling guide |
+| `docs/` | Install guide, App Store and iCloud setup, group guide, metadata schema |
 | `.github/workflows/ci.yml` | Builds and tests on GitHub's Macs on every push; can also build an installable `.ipa` |
 
 ## Releasing (TestFlight and App Store)
@@ -57,7 +57,7 @@ xcodebuild test -project MusicLibrary.xcodeproj -scheme MusicLibrary \
 ```
 
 ## Data and privacy
-Everything stays on the device (Apple Intelligence runs on the device too), in the app's Application Support folder: `Library.store` (database), `Scores/` (PDF copies) and `Annotations/`. That folder is included in the iPad's own iCloud/Finder device backup. TestFlight and App Store builds also sync it through your private iCloud (CloudKit), and can share a Choir Library with your choir; see `docs/icloud-setup.md` and `docs/choir-guide.md`. Otherwise the app makes no network requests.
+Everything stays on the device (Apple Intelligence runs on the device too), in the app's Application Support folder: `Library.store` (database), `Scores/` (PDF copies) and `Annotations/`. That folder is included in the iPad's own iCloud/Finder device backup. TestFlight and App Store builds also sync it through your private iCloud (CloudKit), and can share a Choir Library with your choir; see `docs/icloud-setup.md` and `docs/group-guide.md`. Otherwise the app makes no network requests.
 
 ## Copyright
 

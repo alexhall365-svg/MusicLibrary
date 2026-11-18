@@ -66,7 +66,81 @@ enum DemoContent {
         return setlists.max { ($0.entries?.count ?? 0) < ($1.entries?.count ?? 0) }
     }
 
+    // MARK: - Real music (for App Store screenshots)
+
+    /// Real public-domain scores put in place by the Screenshots workflow:
+    /// `DemoScores/manifest.json` plus the PDFs, under the library folder.
+    private struct Manifest: Decodable {
+        struct Entry: Decodable {
+            var path: String
+            var title: String
+            var composer: String
+            var catalogue: String
+            var scoring: String
+            var key: String
+            var genre: String
+            var tags: [String]
+            var recent: Bool?
+            var uncertain: Bool?
+            var annotate: Bool?
+            var fileName: String?
+        }
+        struct List: Decodable {
+            var name: String
+            var scores: [Int]
+        }
+        var scores: [Entry]
+        var setlists: [List]
+    }
+
+    private static func seedRealMusic(context: ModelContext) -> [Score]? {
+        let paths = LibraryPaths.shared
+        let folder = paths.root.appendingPathComponent("DemoScores", isDirectory: true)
+        guard let data = try? Data(contentsOf: folder.appendingPathComponent("manifest.json")),
+              let manifest = try? JSONDecoder().decode(Manifest.self, from: data) else { return nil }
+        try? paths.ensureDirectories()
+        var created: [Score] = []
+        var annotated: Score?
+        for (index, entry) in manifest.scores.enumerated() {
+            let source = folder.appendingPathComponent((entry.path as NSString).lastPathComponent)
+            let id = UUID()
+            let storedName = "\(id.uuidString).pdf"
+            let url = paths.scoreFileURL(storedFileName: storedName)
+            guard (try? FileManager.default.copyItem(at: source, to: url)) != nil,
+                  let pdf = CGPDFDocument(url as CFURL) else { continue }
+            let metadata = ScoreMetadata(
+                title: entry.title, composer: entry.composer, catalogueNumber: entry.catalogue,
+                scoring: entry.scoring, key: entry.key, genre: entry.genre, tags: entry.tags)
+            let score = Score(
+                id: id, storedFileName: storedName,
+                originalFileName: entry.fileName ?? "\(entry.title).pdf",
+                contentHash: (try? FileHasher.sha256(of: url)) ?? UUID().uuidString,
+                pageCount: pdf.numberOfPages, metadata: metadata)
+            score.dateAdded = Date().addingTimeInterval(Double(-index) * 86_400)
+            if entry.uncertain == true { score.labelStatus = .autoUncertain }
+            if entry.recent == true { score.lastOpened = Date().addingTimeInterval(Double(-index) * 3_600) }
+            context.insert(score)
+            created.append(score)
+            if entry.annotate == true { annotated = score }
+        }
+        guard !created.isEmpty else { return nil }
+        for list in manifest.setlists {
+            let setlist = Setlist(name: list.name)
+            context.insert(setlist)
+            for (position, index) in list.scores.enumerated() where created.indices.contains(index) {
+                let entry = SetlistEntry(position: position)
+                context.insert(entry)
+                entry.score = created[index]
+                entry.setlist = setlist
+            }
+        }
+        try? context.save()
+        if let annotated { addAnnotations(to: annotated) }
+        return created
+    }
+
     private static func seed(context: ModelContext) -> [Score] {
+        if let real = seedRealMusic(context: context) { return real }
         let paths = LibraryPaths.shared
         try? paths.ensureDirectories()
         var created: [Score] = []
