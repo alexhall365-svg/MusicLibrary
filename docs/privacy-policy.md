@@ -1,8 +1,8 @@
-# Privacy Policy
+# Quire Privacy Policy
 
 _Last updated: November 2026_
 
-This app is designed to keep your music and information private.
+Quire is designed to keep your music and information private.
 
 **What we collect:** Nothing. The app does not collect, store or send any personal data to the developer or to anyone else. There are no accounts, analytics, advertising or tracking.
 

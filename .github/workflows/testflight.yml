@@ -1,15 +1,15 @@
 name: TestFlight
 
 # Builds, signs and uploads the app to App Store Connect / TestFlight.
-# Run it from the Actions tab ("Run workflow"), or ask Claude to run it.
+# Run it from the Actions tab ("Run workflow").
 # It also runs monthly so TestFlight builds never reach their 90-day expiry.
 #
-# One-off setup (see docs/app-store-setup.md):
+# Configuration (see docs/maintainers.md):
 #   Repository variables: APP_BUNDLE_ID, APPLE_TEAM_ID (optional: APP_DISPLAY_NAME,
 #                         and the secret PRO_OWNERS = iCloud IDs that always get Pro,
 #                         CLOUDKIT_CONTAINER, ICLOUD_SYNC=off to build without iCloud)
 #   Repository secrets:   ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8
-# iCloud sync needs the one-off steps in docs/icloud-setup.md.
+# iCloud sync needs the CloudKit container described in docs/maintainers.md.
 
 on:
   workflow_dispatch:
@@ -61,7 +61,7 @@ jobs:
           [ -n "$ASC_ISSUER_ID" ] || missing="$missing ASC_ISSUER_ID(secret)"
           [ -n "$ASC_KEY_P8" ] || missing="$missing ASC_KEY_P8(secret)"
           if [ -n "$missing" ]; then
-            echo "::error::Not set up yet. Missing:$missing. Follow docs/app-store-setup.md."
+            echo "::error::Not set up yet. Missing:$missing. See docs/maintainers.md."
             exit 1
           fi
 
@@ -196,7 +196,7 @@ jobs:
             codesign -d --entitlements - --xml "$SIGNED" > "$RUNNER_TEMP/signed.plist" 2>/dev/null \
               || codesign -d --entitlements :- "$SIGNED" > "$RUNNER_TEMP/signed.plist"
             if ! grep -q "$CLOUDKIT_CONTAINER" "$RUNNER_TEMP/signed.plist"; then
-              echo "::error::The signed app has no iCloud entitlement. Check the iCloud capability and container on your App ID (docs/icloud-setup.md, steps 1-2), or set the ICLOUD_SYNC variable to off."
+              echo "::error::The signed app has no iCloud entitlement. Check the iCloud capability and container on your App ID (docs/maintainers.md), or set the ICLOUD_SYNC variable to off."
               cat "$RUNNER_TEMP/signed.plist"
               exit 1
             fi

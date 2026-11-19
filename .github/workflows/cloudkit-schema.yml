@@ -3,7 +3,7 @@ name: CloudKit Schema
 # Uploads CloudKit/schema.ckdb (the record types iCloud sync uses) to the
 # Development environment of the app's iCloud container. Afterwards, open the
 # CloudKit Console in Safari and choose "Deploy Schema Changes…" so TestFlight
-# builds (which use Production) can sync. See docs/icloud-setup.md.
+# builds (which use Production) can sync. See docs/maintainers.md.
 #
 # One-off setup:
 #   Repository variables: APP_BUNDLE_ID, APPLE_TEAM_ID (optional: CLOUDKIT_CONTAINER)
@@ -39,7 +39,7 @@ jobs:
           [ "$CONTAINER" != "iCloud." ] || missing="$missing APP_BUNDLE_ID(variable)"
           [ -n "$CLOUDKIT_MANAGEMENT_TOKEN" ] || missing="$missing CLOUDKIT_MANAGEMENT_TOKEN(secret)"
           if [ -n "$missing" ]; then
-            echo "::error::Not set up yet. Missing:$missing. Follow docs/icloud-setup.md."
+            echo "::error::Not set up yet. Missing:$missing. Follow docs/maintainers.md."
             exit 1
           fi
           echo "Container: $CONTAINER"
@@ -80,7 +80,7 @@ jobs:
                --environment development --file with-share.ckdb; then
             echo "file=with-share.ckdb" >> "$GITHUB_OUTPUT"
           else
-            echo "::warning::CloudKit didn't accept the cloudkit.share type from a file. Importing the app's own types only; see 'Sharing says cannot create type cloudkit.share' in docs/icloud-setup.md."
+            echo "::warning::CloudKit didn't accept the cloudkit.share type from a file. Importing the app's own types only; see docs/maintainers.md."
             xcrun cktool validate-schema --team-id "$TEAM_ID" --container-id "$CONTAINER" \
               --environment development --file CloudKit/schema.ckdb
             echo "file=CloudKit/schema.ckdb" >> "$GITHUB_OUTPUT"

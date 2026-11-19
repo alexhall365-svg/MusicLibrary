@@ -2,7 +2,7 @@ name: Screenshots
 
 # Runs the app with a demo library on an iPhone and an iPad simulator and saves
 # screenshots of the main screens (useful for checking layouts and for the App
-# Store). Run from the Actions tab or ask Claude; download "screenshots" from
+# Store). Run from the Actions tab; download "screenshots" from
 # the run's Artifacts.
 #
 # With "real music" on, the library uses real public-domain scores from the
