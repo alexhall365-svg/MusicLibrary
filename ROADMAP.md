@@ -15,7 +15,7 @@
 
 ## Next: going public (see docs/launch-plan.md)
 - [x] Signed TestFlight/App Store pipeline (GitHub Actions), privacy manifest, privacy policy
-- [x] Pro unlock (one-time £3.99, product ID `pro_unlock`): AI labelling, hosting a shared group, duplicates
+- [x] Pro unlock (one-time £4.99, product ID `pro_unlock`): AI labelling, hosting a shared group, duplicates
 - [x] iPhone layout (compact reader controls, two-page view only where it fits)
 - [x] Demo library and Screenshots workflow for App Store images
 - [ ] App Store listing, screenshots, rating prompt

@@ -54,7 +54,7 @@ Everything App Store Connect asks for, ready to copy. Character limits are Apple
 - Why: no analytics, ads or accounts. Libraries are stored on the device and in each user's own iCloud, which the developer can't access.
 
 ## In-app purchase (In-App Purchases → `pro_unlock`)
-- **Type:** Non-consumable. **Price:** £3.99 (Tier for £3.99). **Family Sharing:** on.
+- **Type:** Non-consumable. **Price:** £4.99. **Family Sharing:** on.
 - **Display name:** `Quire Pro`
 - **Description** (55): `Auto-labelling, shared groups and duplicate finder`
 - **Review screenshot:** a screenshot of the Pro screen (sidebar → Unlock Pro).
