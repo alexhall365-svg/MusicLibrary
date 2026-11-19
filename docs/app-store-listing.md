@@ -1,6 +1,6 @@
-# App Store listing: text to paste
+# App Store metadata
 
-Everything App Store Connect asks for, ready to copy. Character limits are Apple's.
+The metadata submitted to App Store Connect. Character limits are Apple's.
 
 ## App information (App Store Connect → Quire → App Information)
 - **Name** (30): `Quire: Sheet Music Library`

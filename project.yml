@@ -35,7 +35,7 @@ targets:
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         ITSAppUsesNonExemptEncryption: false
-        # iCloud sync and the Choir Library (see docs/icloud-and-choir-plan.md).
+        # iCloud sync and shared groups (see docs/maintainers.md).
         # CLOUD_SYNC is YES only in signed TestFlight/App Store builds, which have
         # the iCloud entitlements; other builds keep everything on the device.
         QuireCloudSync: $(CLOUD_SYNC)

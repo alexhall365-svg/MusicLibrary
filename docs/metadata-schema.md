@@ -1,4 +1,4 @@
-# Metadata exchange format: version 1
+# Import package format (version 1)
 
 This JSON format describes scores in an import package: a folder of PDFs plus a `metadata.json`. Import the folder and the app matches each entry to its PDF, then shows a review screen.
 
@@ -7,8 +7,7 @@ This JSON format describes scores in an import package: a folder of PDFs plus a 
   "schema": "music-library-metadata",
   "version": 1,
   "exportedAt": "2026-11-15T20:00:00Z",
-  "generator": "Quire 0.1.0",
-  "instructionsForClaude": "…older files only; ignored…",
+  "generator": "Quire 1.0",
   "scores": [
     {
       "id": "2F1C…-UUID",
@@ -50,7 +49,7 @@ This JSON format describes scores in an import package: a folder of PDFs plus a 
 | `text`, `pageCount`, `suggestedFileName`, `generator`, `exportedAt` | no | Informational; ignored on import. |
 
 ## Leniency
-To cope with hand-written or chat-generated JSON, the importer also accepts:
+To cope with hand-written JSON, the importer also accepts:
 - JSON surrounded by other text, e.g. a reply containing a ```` ```json ```` code block;
 - a bare array of score entries without the wrapper object;
 - metadata fields placed directly on the entry instead of under `metadata`;
