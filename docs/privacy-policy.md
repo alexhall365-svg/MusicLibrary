@@ -22,4 +22,4 @@ This app is designed to keep your music and information private.
 
 **Changes:** If this policy changes, the new version will be posted at this address.
 
-**Contact:** [your contact email]
+**Contact:** alexhall365@gmail.com
