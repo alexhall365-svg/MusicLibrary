@@ -1,8 +1,14 @@
 name: CI
 
+# Runs once per change: on pull requests (not again on every push or merge),
+# and skips changes that only touch documentation. Can also be run by hand.
 on:
-  push:
   pull_request:
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - "LICENSE"
+      - "Screenshots/**"
   workflow_dispatch:
     inputs:
       build_ipa:
