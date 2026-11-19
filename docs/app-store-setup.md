@@ -127,7 +127,7 @@ Do this once the choir has used the TestFlight version for a few weeks. The laun
 2. **Small Business Program:** apply at developer.apple.com/app-store/small-business-program. It cuts Apple's commission from 30% to **15%**.
 3. **In-app purchase (Pro):** in App Store Connect → your app → **Monetization → In-App Purchases** → **+**:
    - **Type:** Non-Consumable. **Reference name:** `Pro`. **Product ID:** `pro_unlock` (exactly this).
-   - Set **Price** to **£3.99** (UK as the base; Apple suggests the other countries' prices).
+   - Set **Price** to **£4.99** (UK as the base; Apple suggests the other countries' prices).
    - Turn on **Family Sharing**.
    - Add a display name ("Pro") and description ("Auto-labelling, bulk tools and duplicates, forever").
    - Add the review screenshot: the Pro screen (sidebar → Unlock Pro).

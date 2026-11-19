@@ -33,7 +33,7 @@ final class ProStore {
         #endif
     }
 
-    /// The price as the App Store shows it, e.g. "£3.99".
+    /// The price as the App Store shows it, e.g. "£4.99".
     var displayPrice: String? { product?.displayPrice }
 
     func start() {

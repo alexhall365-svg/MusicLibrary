@@ -16,7 +16,7 @@ An iPad and iPhone app for cataloguing, annotating and performing from PDF sheet
 See [ROADMAP.md](ROADMAP.md) for what's next.
 
 ## Free and Pro
-Reading, annotating, the library, setlists and editing details are free. **Pro** (one-time in-app purchase, product ID `pro_unlock`, £3.99) unlocks Apple Intelligence labelling, hosting a shared group and Find Duplicates. Debug builds (Swift Playgrounds) always have Pro.
+Reading, annotating, the library, setlists and editing details are free. **Pro** (one-time in-app purchase, product ID `pro_unlock`, £4.99) unlocks Apple Intelligence labelling, hosting a shared group and Find Duplicates. Debug builds (Swift Playgrounds) always have Pro.
 
 ## Project layout
 
