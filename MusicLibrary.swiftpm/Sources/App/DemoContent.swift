@@ -26,6 +26,7 @@ enum DemoContent {
     static func prepareIfRequested(context: ModelContext, appState: AppState) {
         let defaults = UserDefaults.standard
         guard defaults.bool(forKey: "demoLibrary") else { return }
+        CloudSync.shared.demoMode = true
         let existing = (try? context.fetch(FetchDescriptor<Score>())) ?? []
         let scores = existing.isEmpty ? seed(context: context) : existing
         let setlist = fullestSetlist(context: context)
@@ -52,6 +53,12 @@ enum DemoContent {
         switch defaults.string(forKey: "demoScreen") {
         case "setlist":
             return fullestSetlist(context: context).map { .setlist($0.id) }
+        case "group":
+            let lists = (try? context.fetch(FetchDescriptor<Setlist>())) ?? []
+            if let list = lists.first(where: { $0.cloudLibrary == demoGroupKey }) { return .setlist(list.id) }
+            return .choir(demoGroupKey)
+        case "groupmusic":
+            return .choir(demoGroupKey)
         case "labelling":
             return .labelling
         case "duplicates":
@@ -62,7 +69,7 @@ enum DemoContent {
     }
 
     private static func fullestSetlist(context: ModelContext) -> Setlist? {
-        let setlists = (try? context.fetch(FetchDescriptor<Setlist>())) ?? []
+        let setlists = ((try? context.fetch(FetchDescriptor<Setlist>())) ?? []).filter { $0.cloudLibrary == nil }
         return setlists.max { ($0.entries?.count ?? 0) < ($1.entries?.count ?? 0) }
     }
 
@@ -89,9 +96,19 @@ enum DemoContent {
             var name: String
             var scores: [Int]
         }
+        struct Group: Decodable {
+            var name: String
+            var scores: [Int]
+            var list: List?
+            var members: Int?
+        }
         var scores: [Entry]
         var setlists: [List]
+        var group: Group?
     }
+
+    /// The sample group's library key (a group "hosted" by the demo user).
+    static let demoGroupKey = CloudLibrary.hostedKey(zoneName: CloudLibrary.hostedZonePrefix + "DEMO")
 
     private static func seedRealMusic(context: ModelContext) -> [Score]? {
         let paths = LibraryPaths.shared
@@ -134,8 +151,26 @@ enum DemoContent {
                 entry.setlist = setlist
             }
         }
+        if let group = manifest.group {
+            for index in group.scores where created.indices.contains(index) {
+                created[index].cloudLibrary = demoGroupKey
+            }
+            if let list = group.list {
+                let setlist = Setlist(name: list.name, cloudLibrary: demoGroupKey)
+                context.insert(setlist)
+                for (position, index) in list.scores.enumerated() where created.indices.contains(index) {
+                    let entry = SetlistEntry(position: position)
+                    context.insert(entry)
+                    entry.score = created[index]
+                    entry.setlist = setlist
+                }
+            }
+            CloudSync.shared.upsertChoir(ChoirInfo(
+                id: demoGroupKey, name: group.name, isOwner: true, canEdit: true,
+                ownerName: nil, memberCount: group.members ?? 0))
+        }
         try? context.save()
-        if let annotated { addAnnotations(to: annotated) }
+        if let annotated { addMusicianMarkings(to: annotated) }
         return created
     }
 
@@ -268,6 +303,46 @@ enum DemoContent {
         let attributes: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: UIColor.black]
         let size = (text as NSString).size(withAttributes: attributes)
         (text as NSString).draw(at: CGPoint(x: bounds.width - 40 - size.width, y: y), withAttributes: attributes)
+    }
+
+    /// Markings a singer or director might make, placed on the first page of
+    /// "Es ist ein Ros' entsprungen" (A4, points from the top-left).
+    private static func addMusicianMarkings(to score: Score) {
+        func stroke(_ points: [CGPoint], color: UIColor, width: CGFloat, ink: PKInk.InkType = .pen) -> PKStroke {
+            let controlPoints = points.enumerated().map { index, point in
+                PKStrokePoint(location: point, timeOffset: Double(index) * 0.01, size: CGSize(width: width, height: width),
+                              opacity: 1, force: 1, azimuth: 0, altitude: .pi / 2)
+            }
+            return PKStroke(ink: PKInk(ink, color: color), path: PKStrokePath(controlPoints: controlPoints, creationDate: Date()))
+        }
+        func breath(at x: CGFloat, _ y: CGFloat) -> PKStroke {
+            // A comma-shaped breath mark above the staff.
+            stroke([CGPoint(x: x, y: y - 3), CGPoint(x: x + 3.5, y: y), CGPoint(x: x + 4.5, y: y + 5),
+                    CGPoint(x: x + 2.5, y: y + 10.5), CGPoint(x: x - 2, y: y + 14)],
+                   color: UIColor(red: 0.80, green: 0.10, blue: 0.12, alpha: 1), width: 2.8)
+        }
+        let red = UIColor(red: 0.80, green: 0.10, blue: 0.12, alpha: 1)
+        let blue = UIColor(red: 0.10, green: 0.30, blue: 0.80, alpha: 1)
+        var strokes: [PKStroke] = []
+        strokes.append(breath(at: 516, 120))   // after "zart," (soprano)
+        strokes.append(breath(at: 420, 494))   // after "Art" (second system)
+        // Crescendo hairpin above the soprano line.
+        strokes.append(stroke([CGPoint(x: 300, y: 127), CGPoint(x: 340, y: 124), CGPoint(x: 382, y: 120.5)], color: blue, width: 1.8))
+        strokes.append(stroke([CGPoint(x: 300, y: 127), CGPoint(x: 340, y: 130), CGPoint(x: 382, y: 133.5)], color: blue, width: 1.8))
+        // Circle round the alto's dotted rhythm.
+        var circle: [CGPoint] = []
+        for step in 0...32 {
+            let angle = Double(step) / 32 * 2.1 * .pi - 0.3
+            circle.append(CGPoint(x: 432 + 34 * cos(angle), y: 226 + 17 * sin(angle)))
+        }
+        strokes.append(stroke(circle, color: red, width: 2))
+        // "Watch" arrow pointing at it.
+        strokes.append(stroke([CGPoint(x: 492, y: 252), CGPoint(x: 476, y: 243), CGPoint(x: 466, y: 236)], color: red, width: 2))
+        strokes.append(stroke([CGPoint(x: 466, y: 236), CGPoint(x: 473, y: 236.5)], color: red, width: 2))
+        strokes.append(stroke([CGPoint(x: 466, y: 236), CGPoint(x: 469, y: 242)], color: red, width: 2))
+        // Highlight a phrase of the text.
+        strokes.append(stroke([CGPoint(x: 226, y: 545), CGPoint(x: 340, y: 545)], color: .systemYellow, width: 14, ink: .marker))
+        AnnotationStore().save(PKDrawing(strokes: strokes), scoreID: score.id, page: 0)
     }
 
     private static func addAnnotations(to score: Score) {

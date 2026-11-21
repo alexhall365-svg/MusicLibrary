@@ -110,7 +110,7 @@ jobs:
               mkdir -p "$DATA/Library/Application Support/MusicLibrary/DemoScores"
               cp demo/* "$DATA/Library/Application Support/MusicLibrary/DemoScores/"
             fi
-            for screen in library select delete reader setlist editor labelling duplicates paywall; do
+            for screen in library reader group groupmusic setlist editor labelling duplicates paywall select delete; do
               xcrun simctl terminate "$UDID" "$BUNDLE" 2>/dev/null || true
               xcrun simctl launch "$UDID" "$BUNDLE" -demoLibrary YES -demoScreen "$screen"
               sleep 9
