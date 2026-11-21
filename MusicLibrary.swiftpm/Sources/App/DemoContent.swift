@@ -344,7 +344,7 @@ enum DemoContent {
     /// Markings a singer or director might make, placed on the first page of
     /// "Es ist ein Ros' entsprungen" (A4, points from the top-left).
     private static func addMusicianMarkings(to score: Score) {
-        func stroke(_ points: [CGPoint], color: UIColor, width: CGFloat, ink: PKInk.InkType = .pen) -> PKStroke {
+        func stroke(_ points: [CGPoint], color: UIColor, width: CGFloat, ink: PKInk.InkType = .monoline) -> PKStroke {
             let controlPoints = points.enumerated().map { index, point in
                 PKStrokePoint(location: point, timeOffset: Double(index) * 0.01, size: CGSize(width: width, height: width),
                               opacity: 1, force: 1, azimuth: 0, altitude: .pi / 2)
@@ -355,7 +355,7 @@ enum DemoContent {
             // A comma-shaped breath mark above the staff.
             stroke([CGPoint(x: x, y: y - 3), CGPoint(x: x + 3.5, y: y), CGPoint(x: x + 4.5, y: y + 5),
                     CGPoint(x: x + 2.5, y: y + 10.5), CGPoint(x: x - 2, y: y + 14)],
-                   color: UIColor(red: 0.80, green: 0.10, blue: 0.12, alpha: 1), width: 2.8)
+                   color: UIColor(red: 0.80, green: 0.10, blue: 0.12, alpha: 1), width: 3.2)
         }
         let red = UIColor(red: 0.80, green: 0.10, blue: 0.12, alpha: 1)
         let blue = UIColor(red: 0.10, green: 0.30, blue: 0.80, alpha: 1)
@@ -363,21 +363,21 @@ enum DemoContent {
         strokes.append(breath(at: 516, 120))   // after "zart," (soprano)
         strokes.append(breath(at: 420, 494))   // after "Art" (second system)
         // Crescendo hairpin above the soprano line.
-        strokes.append(stroke([CGPoint(x: 300, y: 127), CGPoint(x: 340, y: 124), CGPoint(x: 382, y: 120.5)], color: blue, width: 1.8))
-        strokes.append(stroke([CGPoint(x: 300, y: 127), CGPoint(x: 340, y: 130), CGPoint(x: 382, y: 133.5)], color: blue, width: 1.8))
+        strokes.append(stroke([CGPoint(x: 300, y: 127), CGPoint(x: 340, y: 124), CGPoint(x: 382, y: 120.5)], color: blue, width: 2.8))
+        strokes.append(stroke([CGPoint(x: 300, y: 127), CGPoint(x: 340, y: 130), CGPoint(x: 382, y: 133.5)], color: blue, width: 2.8))
         // Circle round the alto's dotted rhythm.
         var circle: [CGPoint] = []
         for step in 0...32 {
             let angle = Double(step) / 32 * 2.1 * .pi - 0.3
             circle.append(CGPoint(x: 432 + 34 * cos(angle), y: 226 + 17 * sin(angle)))
         }
-        strokes.append(stroke(circle, color: red, width: 2))
+        strokes.append(stroke(circle, color: red, width: 2.8))
         // "Watch" arrow pointing at it.
-        strokes.append(stroke([CGPoint(x: 492, y: 252), CGPoint(x: 476, y: 243), CGPoint(x: 466, y: 236)], color: red, width: 2))
-        strokes.append(stroke([CGPoint(x: 466, y: 236), CGPoint(x: 473, y: 236.5)], color: red, width: 2))
-        strokes.append(stroke([CGPoint(x: 466, y: 236), CGPoint(x: 469, y: 242)], color: red, width: 2))
+        strokes.append(stroke([CGPoint(x: 492, y: 252), CGPoint(x: 476, y: 243), CGPoint(x: 466, y: 236)], color: red, width: 2.8))
+        strokes.append(stroke([CGPoint(x: 466, y: 236), CGPoint(x: 473, y: 236.5)], color: red, width: 2.8))
+        strokes.append(stroke([CGPoint(x: 466, y: 236), CGPoint(x: 469, y: 242)], color: red, width: 2.8))
         // Highlight a phrase of the text.
-        strokes.append(stroke([CGPoint(x: 226, y: 545), CGPoint(x: 340, y: 545)], color: .systemYellow, width: 14, ink: .marker))
+        strokes.append(stroke([CGPoint(x: 226, y: 545), CGPoint(x: 340, y: 545)], color: UIColor.systemYellow.withAlphaComponent(0.38), width: 13, ink: .marker))
         AnnotationStore().save(PKDrawing(strokes: strokes), scoreID: score.id, page: 0)
     }
 

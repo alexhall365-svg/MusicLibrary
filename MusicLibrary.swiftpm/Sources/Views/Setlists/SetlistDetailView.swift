@@ -28,6 +28,16 @@ private struct SetlistContentView: View {
         let entries = setlist.orderedEntries
         let canEdit = sync.canEdit(setlist)
         List {
+            // Shown as a row (not a bar above the list) so the list's title stays visible.
+            if let choir = sync.choir(setlist.cloudLibrary) {
+                Label(canEdit
+                      ? "Group list in \(choir.name). Changes reach everyone in the group."
+                      : "Group list from \(choir.name). View only.",
+                      systemImage: "person.3")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .listRowSeparator(.hidden)
+            }
             ForEach(Array(entries.enumerated()), id: \.element.id) { index, entry in
                 Button {
                     play(from: index)
@@ -80,20 +90,6 @@ private struct SetlistContentView: View {
                             message: "\"\(setlist.name)\" is now also in your Setlists, where you can reorder and change it.")
                     }
                 }
-            }
-        }
-        .safeAreaInset(edge: .top) {
-            if let choir = sync.choir(setlist.cloudLibrary) {
-                Label(canEdit
-                      ? "Group list in \(choir.name). Changes reach everyone in the group."
-                      : "Group list from \(choir.name). View only.",
-                      systemImage: "person.3")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal)
-                    .padding(.vertical, 6)
-                    .background(.bar)
             }
         }
         .sheet(isPresented: $showingAddScores) {
