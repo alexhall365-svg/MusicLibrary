@@ -38,6 +38,8 @@ enum DemoContent {
             }
         case "editor":
             appState.editingScore = scores.first { $0.labelStatus == .autoUncertain } ?? scores.first
+        case "aireview":
+            presentDemoReview(scores: scores, context: context, appState: appState)
         case "paywall", "setlist", "labelling", "duplicates":
             // Handled by RootView (sidebar selection / sheets).
             break
@@ -71,6 +73,40 @@ enum DemoContent {
     private static func fullestSetlist(context: ModelContext) -> Setlist? {
         let setlists = ((try? context.fetch(FetchDescriptor<Setlist>())) ?? []).filter { $0.cloudLibrary == nil }
         return setlists.max { ($0.entries?.count ?? 0) < ($1.entries?.count ?? 0) }
+    }
+
+    /// The Apple Intelligence review screen, as it looks after labelling an
+    /// untitled scan. The simulators used for screenshots have no Apple
+    /// Intelligence, so the suggestions are the ones it gives for these scores.
+    private static func presentDemoReview(scores: [Score], context: ModelContext, appState: AppState) {
+        var entries: [ExchangeEntry] = []
+        if let scan = scores.first(where: { $0.originalFileName == "Scan 0042.pdf" }) {
+            var metadata = scan.metadata
+            metadata.title = "Ode to Joy"
+            metadata.composer = "Beethoven, Ludwig van"
+            metadata.catalogueNumber = "Op. 125"
+            metadata.scoring = "Melody"
+            metadata.key = "D major"
+            metadata.genre = "Hymn"
+            entries.append(ExchangeEntry(
+                id: scan.id.uuidString, file: scan.originalFileName, sha256: scan.contentHash,
+                metadata: ExchangeMetadata(metadata),
+                confidence: ["title": 0.96, "composer": 0.94, "catalogueNumber": 0.82, "key": 0.9, "genre": 0.66]))
+        }
+        if let psalm = scores.first(where: { $0.title == "Psalm 23" }) {
+            var metadata = psalm.metadata
+            metadata.key = "A-flat major"
+            metadata.tags = metadata.tags + ["Psalm"]
+            entries.append(ExchangeEntry(
+                id: psalm.id.uuidString, file: psalm.originalFileName, sha256: psalm.contentHash,
+                metadata: ExchangeMetadata(metadata),
+                confidence: ["key": 0.62],
+                flags: ["Key read from the first page only"]))
+        }
+        guard !entries.isEmpty else { return }
+        ImportCoordinator(context: context, appState: appState).presentReview(
+            of: MetadataExchangeFile(scores: entries, exportedAt: nil),
+            title: "Apple Intelligence", emptyMessage: nil)
     }
 
     // MARK: - Real music (for App Store screenshots)

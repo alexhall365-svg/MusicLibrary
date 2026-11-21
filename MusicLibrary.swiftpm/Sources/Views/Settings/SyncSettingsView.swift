@@ -23,7 +23,15 @@ struct SyncSettingsView: View {
         @Bindable var sync = sync
         NavigationStack {
             Form {
-                if !sync.isSupported {
+                if sync.demoMode {
+                    // Screenshots: the group section only (the simulator has no iCloud).
+                    Section {
+                        Label("Sync with iCloud: up to date", systemImage: "checkmark.icloud")
+                    } footer: {
+                        Text("Your scores, details, setlists and annotations sync between your own iPad and iPhone. Every device keeps a full copy, so everything works offline.")
+                    }
+                    hostedSection
+                } else if !sync.isSupported {
                     Section {
                         Label("iCloud sync and shared groups work in the TestFlight and App Store versions of \(AppConfig.displayName). This build (for example from Swift Playgrounds) keeps everything on this device.", systemImage: "icloud.slash")
                             .font(.callout)
