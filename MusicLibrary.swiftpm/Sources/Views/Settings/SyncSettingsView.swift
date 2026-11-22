@@ -211,10 +211,11 @@ struct SyncSettingsView: View {
         }
     }
 
+    /// Each group you run, then a button to create another.
     @ViewBuilder
     private var hostedSection: some View {
-        Section {
-            if let choir = sync.hostedChoir {
+        ForEach(sync.hostedChoirs) { choir in
+            Section {
                 LabeledContent(choir.name) {
                     Text(choir.memberCount == 1 ? "1 member" : "\(choir.memberCount) members")
                 }
@@ -234,24 +235,29 @@ struct SyncSettingsView: View {
                 } label: {
                     Label("Delete Group", systemImage: "trash")
                 }
-            } else {
-                Button {
-                    if appState.pro.isPro {
-                        newChoirName = ""
-                        showingCreate = true
-                    } else {
-                        showingPaywall = true
-                    }
-                } label: {
-                    Label(appState.pro.isPro ? "Create Shared Group" : "Create Shared Group (Pro)",
-                          systemImage: "person.3")
+            } header: {
+                if choir.id == sync.hostedChoirs.first?.id {
+                    Text(sync.hostedChoirs.count == 1 ? "Your Shared Group" : "Your Shared Groups")
                 }
-                .disabled(sync.accountStatus != .available)
             }
+        }
+        Section {
+            Button {
+                if appState.pro.isPro {
+                    newChoirName = ""
+                    showingCreate = true
+                } else {
+                    showingPaywall = true
+                }
+            } label: {
+                Label(appState.pro.isPro ? "Create Shared Group" : "Create Shared Group (Pro)",
+                      systemImage: "person.3")
+            }
+            .disabled(!sync.demoMode && sync.accountStatus != .available)
         } header: {
-            Text("Your Shared Group")
+            if sync.hostedChoirs.isEmpty { Text("Your Shared Groups") }
         } footer: {
-            Text("Share music and lists such as \"Evensong – Advent Sunday\" or \"Spring Concert\" with a choir, band or orchestra. Everyone keeps a full copy for rehearsal. Anyone you send the link to can join and view; only you can change the music and lists. Your markings on group music are shared with everyone as the director's markings; members' own markings stay private. Hosting needs Pro; joining is free.")
+            Text("Share music and lists such as \"Evensong – Advent Sunday\" or \"Spring Concert\" with a choir, band or orchestra. You can run several groups, each with its own music, lists and link. Everyone keeps a full copy for rehearsal. Anyone you send a group's link to can join and view; only you can change its music and lists. Your markings on group music are shared with everyone as the director's markings; members' own markings stay private. Hosting needs Pro; joining is free.")
         }
     }
 

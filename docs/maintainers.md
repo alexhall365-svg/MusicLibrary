@@ -43,7 +43,7 @@ Build numbers are the workflow run number plus 100.
 App Store metadata (description, keywords, review notes, privacy answers) is kept in [app-store-listing.md](app-store-listing.md).
 
 ## In-app purchase
-Non-consumable `pro_unlock`, Family Sharing on. Pro includes Apple Intelligence labelling, hosting a shared group and Find Duplicates. Offer codes can grant Pro without payment once the purchase is live.
+Non-consumable `pro_unlock`, Family Sharing on. Pro includes Apple Intelligence labelling, hosting shared groups and Find Duplicates. Offer codes can grant Pro without payment once the purchase is live.
 
 ## Troubleshooting
 | Symptom | Cause |

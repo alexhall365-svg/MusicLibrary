@@ -5,14 +5,11 @@ import UIKit
 
 enum ChoirError: LocalizedError {
     case notAvailable
-    case alreadyHosting
 
     var errorDescription: String? {
         switch self {
         case .notAvailable:
             return "iCloud isn't available. Check you're signed in to iCloud and connected to the internet."
-        case .alreadyHosting:
-            return "You already host a shared group."
         }
     }
 }
@@ -23,9 +20,6 @@ extension CloudSync {
     /// that you then send to the choir. Needs a connection.
     func createChoir(named name: String) async throws -> ChoirInfo {
         guard let container = cloudContainer, isEnabled else { throw ChoirError.notAvailable }
-        // One hosted choir for now. The storage allows several (each is its own
-        // zone), so this limit can be lifted later without changing the data.
-        guard hostedChoir == nil else { throw ChoirError.alreadyHosting }
         let database = container.privateCloudDatabase
         let zone = CKRecordZone(zoneName: CloudLibrary.hostedZonePrefix + UUID().uuidString.prefix(8))
         _ = try await database.modifyRecordZones(saving: [zone], deleting: [])

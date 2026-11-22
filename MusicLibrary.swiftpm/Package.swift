@@ -21,7 +21,7 @@ let package = Package(
             targets: ["AppModule"],
             bundleIdentifier: "com.example.musiclibrary",
             teamIdentifier: "",
-            displayVersion: "1.0.1",
+            displayVersion: "1.0.2",
             bundleVersion: "1",
             appIcon: .asset("AppIcon"),
             accentColor: .asset("AccentColor"),
