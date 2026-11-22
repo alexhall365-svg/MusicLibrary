@@ -52,11 +52,16 @@ final class ProStore {
         }
     }
 
+    /// Why the product couldn't be loaded, if it couldn't.
+    private var loadFailedOffline = false
+
     func loadProduct() async {
         do {
             product = try await Product.products(for: [ProStore.productID]).first
+            loadFailedOffline = false
         } catch {
             product = nil
+            loadFailedOffline = true
         }
     }
 
@@ -88,7 +93,11 @@ final class ProStore {
         }
         if product == nil { await loadProduct() }
         guard let product else {
-            message = "The App Store isn't available right now. Check your connection and try again."
+            // An empty answer means the App Store isn't offering Pro yet (for
+            // example while it's being reviewed); only an error means offline.
+            message = loadFailedOffline
+                ? "The App Store couldn't be reached. Check your connection and try again."
+                : "Pro isn't available to buy at the moment. Please try again later."
             return
         }
         isPurchasing = true
