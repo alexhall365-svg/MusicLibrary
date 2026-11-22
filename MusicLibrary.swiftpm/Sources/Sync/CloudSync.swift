@@ -50,6 +50,8 @@ final class CloudSync {
     /// A problem worth showing (iCloud full, signed out…).
     var problem: String?
     private(set) var choirs: [ChoirInfo] = []
+    /// Screenshot demo only (`-demoLibrary`): show a sample group without iCloud.
+    var demoMode = false
     /// Your own scores on this device, and how many of their PDFs are in iCloud.
     private(set) var scoresHere = 0
     private(set) var scoresInICloud = 0

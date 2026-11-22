@@ -19,6 +19,7 @@ struct RootView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var selection: SidebarItem? = .allScores
     @State private var showingDemoPaywall = false
+    @State private var showingDemoGroups = false
     @Environment(\.horizontalSizeClass) private var sizeClass
     @Environment(\.requestReview) private var requestReview
 
@@ -77,8 +78,13 @@ struct RootView: View {
                 && UserDefaults.standard.bool(forKey: "demoLibrary") {
                 showingDemoPaywall = true
             }
+            if UserDefaults.standard.string(forKey: "demoScreen") == "groups"
+                && UserDefaults.standard.bool(forKey: "demoLibrary") {
+                showingDemoGroups = true
+            }
         }
         .sheet(isPresented: $showingDemoPaywall) { PaywallView() }
+        .sheet(isPresented: $showingDemoGroups) { SyncSettingsView() }
         .onOpenURL { url in
             Task { await ImportCoordinator(context: modelContext, appState: appState).handleOpenedURL(url) }
         }

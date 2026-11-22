@@ -90,7 +90,7 @@ struct PaywallView: View {
                     Button("Done") { dismiss() }
                 }
             }
-            .task { if pro.product == nil { await pro.loadProduct() } }
+            .task { if pro.product == nil { await pro.loadProduct() } } // retried each time Pro opens
             .offerCodeRedemption(isPresented: $showingRedeem) { result in
                 Task { await pro.codeRedemptionFinished(result) }
             }

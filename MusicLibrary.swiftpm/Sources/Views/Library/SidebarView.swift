@@ -44,7 +44,7 @@ struct SidebarView: View {
                 }
             }
 
-            if sync.isSupported && sync.isEnabled && !sync.choirs.isEmpty {
+            if (sync.isSupported && sync.isEnabled || sync.demoMode) && !sync.choirs.isEmpty {
                 ForEach(sync.choirs) { choir in
                     choirSection(choir)
                 }
