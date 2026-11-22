@@ -31,7 +31,7 @@ struct PaywallView: View {
                     VStack(alignment: .leading, spacing: 16) {
                         feature("sparkles", "Auto-label with Apple Intelligence",
                                 "New imports fill in their own titles, composers and more, privately on your device.")
-                        feature("person.3", "Host a shared group",
+                        feature("person.3", "Host shared groups",
                                 "Share music, lists and your markings with a choir, band or orchestra. Joining a group is always free.")
                         feature("doc.on.doc", "Find duplicates",
                                 "Spot copies by name, text or how the page looks, and tidy up safely.")

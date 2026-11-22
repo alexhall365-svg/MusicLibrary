@@ -16,7 +16,7 @@ This repository contains the source code of the Quire app, published for referen
 - **Shared groups:** a director shares music and lists with a group by link. Members keep full offline copies, see the director's markings, and keep their own markings private. See the [group guide](docs/group-guide.md).
 - **Find Duplicates:** identifies copies by file, title, page text or the look of the first page.
 
-The library, reader, annotation, setlists, sync and joining a group are free. A one-time **Pro** purchase adds Apple Intelligence labelling, hosting a shared group and Find Duplicates.
+The library, reader, annotation, setlists, sync and joining a group are free. A one-time **Pro** purchase adds Apple Intelligence labelling, hosting shared groups and Find Duplicates.
 
 ## Privacy
 Quire collects no data. There are no accounts, analytics, advertising or tracking. Music and annotations are stored on the device and in the user's own iCloud. See the [privacy policy](docs/privacy-policy.md).

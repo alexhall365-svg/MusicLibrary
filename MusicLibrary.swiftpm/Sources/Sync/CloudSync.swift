@@ -63,7 +63,8 @@ final class CloudSync {
     /// Recent sync activity, newest last, for "Sync Log" in Settings.
     private(set) var log: [String] = []
 
-    var hostedChoir: ChoirInfo? { choirs.first { $0.isOwner } }
+    /// Groups this person runs (any number).
+    var hostedChoirs: [ChoirInfo] { choirs.filter(\.isOwner) }
     var joinedChoirs: [ChoirInfo] { choirs.filter { !$0.isOwner } }
 
     @ObservationIgnored private var container: CKContainer?
