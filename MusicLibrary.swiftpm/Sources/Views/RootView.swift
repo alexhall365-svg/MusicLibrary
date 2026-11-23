@@ -123,16 +123,12 @@ private struct StatusOverlays: ViewModifier {
             .overlay(alignment: .bottom) {
                 if enabled {
                     VStack(spacing: 8) {
+                        ImportBanner()
                         SyncProgressBanner()
                         AutoLabelBanner(labeler: appState.autoLabeler)
                     }
                     .padding(.horizontal, 16)
                     .padding(.bottom, 12)
-                }
-            }
-            .overlay {
-                if enabled, let message = appState.busyMessage {
-                    BusyOverlay(message: message)
                 }
             }
     }
@@ -177,6 +173,53 @@ struct BusyOverlay: View {
 }
 
 /// Shows Apple Intelligence progress without blocking the app.
+/// Import progress and result, shown without blocking the app.
+struct ImportBanner: View {
+    @Environment(AppState.self) private var appState
+
+    var body: some View {
+        Group {
+            if let status = appState.importStatus {
+                HStack(spacing: 10) {
+                    ProgressView()
+                    Text(status)
+                        .font(.footnote.weight(.semibold))
+                        .monospacedDigit()
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(.regularMaterial, in: Capsule())
+                .shadow(color: .black.opacity(0.15), radius: 8, y: 2)
+            } else if let summary = appState.importSummary {
+                HStack(spacing: 10) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                    Text(summary)
+                        .font(.footnote)
+                    Button {
+                        appState.importSummary = nil
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                    }
+                    .accessibilityLabel("Dismiss")
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(.regularMaterial, in: Capsule())
+                .shadow(color: .black.opacity(0.15), radius: 8, y: 2)
+                .task(id: summary) {
+                    // Clears itself after a few seconds.
+                    try? await Task.sleep(for: .seconds(4))
+                    if appState.importSummary == summary { appState.importSummary = nil }
+                }
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: appState.importStatus)
+        .animation(.easeInOut(duration: 0.2), value: appState.importSummary)
+    }
+}
+
 struct AutoLabelBanner: View {
     let labeler: AutoLabeler
 
