@@ -10,12 +10,16 @@ struct ImportCoordinator {
     @MainActor
     func importItems(_ urls: [URL]) async {
         guard !urls.isEmpty else { return }
-        appState.busyMessage = "Importing…"
+        // Runs in the background: a banner shows progress and the app stays usable.
+        appState.importsRunning += 1
+        appState.importSummary = nil
+        appState.importStatus = "Importing…"
         let service = ImportService(context: context)
         let report = await service.importItems(urls) { done, total in
-            appState.busyMessage = "Importing \(done) of \(total)…"
+            appState.importStatus = "Importing \(min(done + 1, total)) of \(total)…"
         }
-        appState.busyMessage = nil
+        appState.importsRunning -= 1
+        if appState.importsRunning == 0 { appState.importStatus = nil }
 
         let newIDs = report.imported.map(\.id)
         let useAppleIntelligence = report.metadataFile == nil && !newIDs.isEmpty
@@ -25,25 +29,28 @@ struct ImportCoordinator {
 
         if let file = report.metadataFile {
             presentReview(of: file, title: "Package Details", emptyMessage: report.summary)
-        } else if isSingleClean {
-            // One new score: fill it in, then show its details to check.
-            if useAppleIntelligence && !appState.autoLabeler.isRunning {
-                appState.busyMessage = "Reading the score with Apple Intelligence…"
-                appState.autoLabeler.start(newIDs, mode: .apply, context: context, appState: appState)
-                await appState.autoLabeler.wait()
-                appState.autoLabeler.summary = nil
-                appState.busyMessage = nil
-            } else if useAppleIntelligence {
-                appState.autoLabeler.start(newIDs, mode: .apply, context: context, appState: appState)
-            }
+        } else if useAppleIntelligence {
+            // Apple Intelligence fills in the details in the background; its
+            // banner shows progress, and unsure results go to Needs Details.
+            appState.autoLabeler.start(newIDs, mode: .apply, context: context, appState: appState)
+            finish(report)
+        } else if isSingleClean && appState.readerRequest == nil && appState.editingScore == nil
+                    && appState.review == nil {
+            // One new score and nothing else on screen: show its details to fill in.
             appState.editingScore = report.imported[0]
         } else {
-            var message = report.summary
-            if useAppleIntelligence {
-                appState.autoLabeler.start(newIDs, mode: .apply, context: context, appState: appState)
-                message += "\n\nApple Intelligence is filling in the details in the background. You can keep using the app."
-            }
-            appState.alert = AppAlert(title: "Import Finished", message: message)
+            finish(report)
+        }
+    }
+
+    /// Reports the result without interrupting: a banner when all went well,
+    /// an alert only when something was skipped or failed.
+    @MainActor
+    private func finish(_ report: ImportReport) {
+        if report.duplicates.isEmpty && report.failures.isEmpty {
+            appState.importSummary = report.summary
+        } else {
+            appState.alert = AppAlert(title: "Import Finished", message: report.summary)
         }
     }
 

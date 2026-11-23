@@ -18,8 +18,12 @@ final class AppState {
     var editingScore: Score?
     /// A simple message alert.
     var alert: AppAlert?
-    /// When set, a blocking progress overlay is shown with this text.
-    var busyMessage: String?
+    /// Imports in progress, shown in a small banner while the app stays usable.
+    var importStatus: String?
+    /// How many imports are running (several can overlap).
+    var importsRunning = 0
+    /// A short message shown when an import finishes, until dismissed.
+    var importSummary: String?
 }
 
 struct AppAlert: Identifiable {
