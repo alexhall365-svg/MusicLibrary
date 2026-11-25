@@ -179,13 +179,27 @@ final class SyncTests: XCTestCase {
 
     // MARK: - Choir lists
 
-    func testAddingYourScoreToAChoirListMovesItIntoTheChoir() {
+    func testAddingYourScoreToAChoirListCopiesItIntoTheChoir() throws {
         let choir = CloudLibrary.hostedKey(zoneName: "Choir-1")
         let mine = makeScore(title: "Mine")
+        try LibraryPaths.shared.ensureDirectories()
+        try Data("%PDF-1.4".utf8).write(to: mine.fileURL)
+        defer { try? FileManager.default.removeItem(at: mine.fileURL) }
+
         let list = LibraryActions.createSetlist(named: "Christmas season 2026", in: choir, context: context)
         LibraryActions.add([mine], to: list, context: context)
-        XCTAssertEqual(mine.cloudLibrary, choir)
-        XCTAssertEqual(list.orderedScores.map(\.id), [mine.id])
+        XCTAssertNil(mine.cloudLibrary, "your own copy stays in your library")
+        let copy = try XCTUnwrap(list.orderedScores.first)
+        XCTAssertNotEqual(copy.id, mine.id)
+        XCTAssertEqual(copy.cloudLibrary, choir)
+        XCTAssertEqual(copy.title, "Mine")
+        XCTAssertEqual(copy.contentHash, mine.contentHash)
+        defer { try? FileManager.default.removeItem(at: copy.fileURL) }
+
+        // Adding it again reuses the group's copy.
+        LibraryActions.copyToChoir([mine], library: choir, context: context)
+        let inChoir = try context.fetch(FetchDescriptor<Score>()).filter { $0.cloudLibrary == choir }
+        XCTAssertEqual(inChoir.map(\.id), [copy.id])
     }
 
     func testChoirListIgnoresAnotherChoirsMusic() {
