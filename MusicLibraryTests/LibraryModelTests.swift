@@ -67,6 +67,18 @@ final class LibraryModelTests: XCTestCase {
         XCTAssertEqual(sorted.map(\.catalogueNumber), ["BWV 227", "BWV 1000"])
     }
 
+    func testRecentSortUsesLaterOfAddedAndOpened() throws {
+        let old = makeScore(ScoreMetadata(title: "Opened today"))
+        old.dateAdded = Date(timeIntervalSinceNow: -30 * 86_400)
+        old.lastOpened = Date(timeIntervalSinceNow: -60)
+        let untouched = makeScore(ScoreMetadata(title: "Old"))
+        untouched.dateAdded = Date(timeIntervalSinceNow: -10 * 86_400)
+        let new = makeScore(ScoreMetadata(title: "Just added"))
+        new.dateAdded = Date()
+        let sorted = LibraryFilter.sorted(try context.fetch(FetchDescriptor<Score>()), by: .recent)
+        XCTAssertEqual(sorted.map(\.title), ["Just added", "Opened today", "Old"])
+    }
+
     func testSetlistOrderingAndCascade() throws {
         let first = makeScore(ScoreMetadata(title: "Introit"))
         let second = makeScore(ScoreMetadata(title: "Anthem"))

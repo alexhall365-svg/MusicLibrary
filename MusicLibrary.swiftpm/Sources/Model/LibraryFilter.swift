@@ -1,12 +1,13 @@
 import Foundation
 
 enum ScoreSort: String, CaseIterable, Identifiable {
-    case title, composer, catalogue, dateAdded, recentlyOpened
+    case recent, title, composer, catalogue, dateAdded, recentlyOpened
 
     var id: String { rawValue }
 
     var label: String {
         switch self {
+        case .recent: return "Recently Opened or Added"
         case .title: return "Title"
         case .composer: return "Composer"
         case .catalogue: return "Catalogue Number"
@@ -107,6 +108,10 @@ enum LibraryFilter {
                 if !same(a.catalogueNumber, b.catalogueNumber) { return compare(a.catalogueNumber, b.catalogueNumber) }
                 return compare(a.displayTitle, b.displayTitle)
             }
+        case .recent:
+            // Whichever is later: when it was added or last opened. A new import
+            // comes first, then whatever you've been playing.
+            return scores.sorted { max($0.dateAdded, $0.lastOpened ?? .distantPast) > max($1.dateAdded, $1.lastOpened ?? .distantPast) }
         case .dateAdded:
             return scores.sorted { $0.dateAdded > $1.dateAdded }
         case .recentlyOpened:
