@@ -914,8 +914,21 @@ extension CloudSync {
     /// Turns a hosted Choir Library's music and lists into your own.
     func moveLibraryToPersonal(_ library: String) {
         guard let context = modelContainer?.mainContext else { return }
-        for score in (try? context.fetch(FetchDescriptor<Score>())) ?? [] where score.cloudLibrary == library {
-            score.cloudLibrary = nil
+        let allScores = (try? context.fetch(FetchDescriptor<Score>())) ?? []
+        // Music added to the group from your library is a copy: keep your own
+        // copy instead of ending up with two.
+        var personalByHash: [String: Score] = [:]
+        for score in allScores where score.isPersonal && !score.contentHash.isEmpty {
+            personalByHash[score.contentHash] = score
+        }
+        for score in allScores where score.cloudLibrary == library {
+            if let own = personalByHash[score.contentHash] {
+                for entry in score.setlistEntries ?? [] { entry.score = own }
+                score.setlistEntries = []
+                removeScoreLocally(score, context: context)
+            } else {
+                score.cloudLibrary = nil
+            }
         }
         for setlist in (try? context.fetch(FetchDescriptor<Setlist>())) ?? [] where setlist.cloudLibrary == library {
             setlist.cloudLibrary = nil

@@ -117,7 +117,8 @@ final class ImportService {
 
     private func existingHashes() -> Set<String> {
         let scores = (try? context.fetch(FetchDescriptor<Score>())) ?? []
-        return Set(scores.map(\.contentHash))
+        // Only your own library: music you have through a group can still be imported.
+        return Set(scores.filter(\.isPersonal).map(\.contentHash))
     }
 
     // MARK: - Background work

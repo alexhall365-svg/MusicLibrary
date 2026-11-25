@@ -47,16 +47,17 @@ enum LibraryActions {
         return setlist
     }
 
-    /// Adds scores to a setlist. A choir list can only hold choir music (members
-    /// need the PDFs), so your own scores added to one move into that Choir Library.
+    /// Adds scores to a setlist. A group list can only hold that group's music
+    /// (members need the PDFs), so your own scores added to one are copied into
+    /// the group; your own library keeps them.
     static func add(_ scores: [Score], to setlist: Setlist, context: ModelContext) {
+        var scores = scores
         if let library = setlist.cloudLibrary {
-            for score in scores where score.cloudLibrary != library {
-                guard score.isPersonal else { continue }
-                score.cloudLibrary = library
+            scores = scores.compactMap { score in
+                if score.cloudLibrary == library { return score }
+                return score.isPersonal ? groupCopy(of: score, in: library, context: context) : nil
             }
         }
-        let scores = scores.filter { setlist.cloudLibrary == nil || $0.cloudLibrary == setlist.cloudLibrary }
         var next = ((setlist.entries ?? []).map(\.position).max() ?? -1) + 1
         for score in scores {
             let entry = SetlistEntry(position: next)
@@ -68,12 +69,56 @@ enum LibraryActions {
         try? context.save()
     }
 
-    /// Moves your own scores into a Choir Library, so every member gets them.
-    static func moveToChoir(_ scores: [Score], library: String, context: ModelContext) {
+    /// Copies your own scores into a group, so every member gets them. Your own
+    /// library keeps its copy, with your markings still private to you.
+    static func copyToChoir(_ scores: [Score], library: String, context: ModelContext) {
         for score in scores where score.isPersonal {
-            score.cloudLibrary = library
+            _ = groupCopy(of: score, in: library, context: context)
         }
         try? context.save()
+    }
+
+    /// The group's copy of a score: the one already there (same PDF), or a new
+    /// copy with the same details. Your markings are copied too, and in the group
+    /// they show to everyone as the director's markings.
+    static func groupCopy(of score: Score, in library: String, context: ModelContext) -> Score? {
+        let hash = score.contentHash
+        var descriptor = FetchDescriptor<Score>(predicate: #Predicate { $0.contentHash == hash })
+        descriptor.fetchLimit = 20
+        if !hash.isEmpty, let existing = ((try? context.fetch(descriptor)) ?? []).first(where: { $0.cloudLibrary == library }) {
+            return existing
+        }
+        let fileManager = FileManager.default
+        let id = UUID()
+        let storedName = "\(id.uuidString).pdf"
+        let paths = LibraryPaths.shared
+        do {
+            try fileManager.copyItem(at: score.fileURL, to: paths.scoreFileURL(storedFileName: storedName))
+        } catch {
+            return nil
+        }
+        let copy = Score(
+            id: id, storedFileName: storedName, originalFileName: score.originalFileName,
+            contentHash: score.contentHash, pageCount: score.pageCount, metadata: score.metadata)
+        copy.extractedText = score.extractedText
+        copy.labelStatusRaw = score.labelStatusRaw
+        copy.pageFingerprint = score.pageFingerprint
+        copy.cloudLibrary = library
+        context.insert(copy)
+
+        // Your own markings (not markings received from another group's director).
+        let source = paths.annotationsDirectory(for: score.id)
+        let files = (try? fileManager.contentsOfDirectory(at: source, includingPropertiesForKeys: nil)) ?? []
+        let drawings = files.filter { $0.pathExtension == "drawing" }
+        if !drawings.isEmpty {
+            let destination = paths.annotationsDirectory(for: id)
+            try? fileManager.createDirectory(at: destination, withIntermediateDirectories: true)
+            for file in drawings {
+                try? fileManager.copyItem(at: file, to: destination.appendingPathComponent(file.lastPathComponent))
+            }
+            NotificationCenter.default.post(name: AnnotationStore.didChange, object: nil)
+        }
+        return copy
     }
 
     /// Takes a score out of a Choir Library: it's removed from members' devices.
@@ -84,7 +129,12 @@ enum LibraryActions {
             entry.setlist?.entries?.removeAll { $0.id == entry.id }
             context.delete(entry)
         }
-        if keepCopy {
+        let hash = score.contentHash
+        var descriptor = FetchDescriptor<Score>(predicate: #Predicate { $0.contentHash == hash })
+        descriptor.fetchLimit = 20
+        let alreadyKept = !hash.isEmpty
+            && ((try? context.fetch(descriptor)) ?? []).contains { $0.isPersonal && $0.id != score.id }
+        if keepCopy && !alreadyKept {
             score.cloudLibrary = nil
             try? context.save()
         } else {

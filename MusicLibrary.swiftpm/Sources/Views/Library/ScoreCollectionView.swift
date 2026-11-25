@@ -28,7 +28,7 @@ struct ScoreCollectionView: View {
     @Environment(\.horizontalSizeClass) private var sizeClass
     @Query(sort: \Score.dateAdded, order: .reverse) private var allScores: [Score]
     @Query(sort: \Setlist.name) private var setlists: [Setlist]
-    @AppStorage("library.sort") private var sortRaw = ScoreSort.title.rawValue
+    @AppStorage("library.sortOrder") private var sortRaw = ScoreSort.recent.rawValue
     @AppStorage("library.layout") private var layoutRaw = "grid"
     @State private var searchText = ""
     @State private var isDropTargeted = false
@@ -41,7 +41,7 @@ struct ScoreCollectionView: View {
     @State private var selection: Set<UUID> = []
 
     private var sort: ScoreSort {
-        scope == .recent ? .recentlyOpened : (ScoreSort(rawValue: sortRaw) ?? .title)
+        scope == .recent ? .recentlyOpened : (ScoreSort(rawValue: sortRaw) ?? .recent)
     }
 
     private var scores: [Score] {
@@ -359,7 +359,7 @@ struct ScoreCollectionView: View {
         if score.isPersonal {
             ForEach(sync.editableChoirs) { choir in
                 Button("Add to \(choir.name)", systemImage: "person.3") {
-                    LibraryActions.moveToChoir([score], library: choir.id, context: modelContext)
+                    LibraryActions.copyToChoir([score], library: choir.id, context: modelContext)
                 }
             }
         } else if canEdit {
@@ -372,7 +372,7 @@ struct ScoreCollectionView: View {
     }
 
     /// Choir lists these scores can go in: lists in their own choir, or (for
-    /// your own scores) lists in a choir you can edit, which moves them into it.
+    /// your own scores) lists in a group you can edit, which copies them into it.
     private func choirLists(for scores: [Score]) -> [Setlist] {
         setlists.filter { list in
             guard let library = list.cloudLibrary, sync.canEdit(library) else { return false }

@@ -171,7 +171,7 @@ struct AddScoresSheet: View {
             .searchable(text: $searchText, prompt: "Search scores")
             .safeAreaInset(edge: .bottom) {
                 if setlist.cloudLibrary != nil {
-                    Text("Your own scores you add here move into the group, so every member gets them.")
+                    Text("Your own scores you add here are copied into the group, so every member gets them. They stay in your library too.")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                         .padding()
